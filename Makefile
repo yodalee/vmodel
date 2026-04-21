@@ -2,6 +2,7 @@ TOP      = Top
 RTL_DIR  = rtl
 OBJ_DIR  = obj_dir
 TB_OBJ_DIR = obj_dir_tb
+VERILOG_DIR = verilog
 
 VERILATOR        = verilator
 VERILATOR_ROOT  ?= $(shell $(VERILATOR) --getenv VERILATOR_ROOT)
@@ -23,9 +24,19 @@ CXXFLAGS = -std=c++17 -O2 \
            -I$(VERILATOR_ROOT)/include \
            -I$(VERILATOR_ROOT)/include/vltstd
 
+VINT_TEST_SRCS = \
+	$(VERILOG_DIR)/dtype/vint_test.cpp \
+	$(VERILOG_DIR)/dtype/varray_test.cpp \
+	$(VERILOG_DIR)/dtype/vstruct_test.cpp \
+	$(VERILOG_DIR)/operation/bit_offset_test.cpp \
+	$(VERILOG_DIR)/operation/print_indent_test.cpp \
+	$(VERILOG_DIR)/serialize_test.cpp
+
+VINT_CXXFLAGS = -std=c++17 -O2 -I.
+
 .PHONY: all sim_cpp sim_tb lint clean
 
-all: sim_cpp sim_tb
+all: sim_cpp sim_tb test_vint
 
 $(OBJ_DIR)/V$(TOP).mk: $(SV_SOURCES)
 	$(VERILATOR) $(VERILATOR_FLAGS) --top-module $(TOP) $(SV_SOURCES)
@@ -60,5 +71,8 @@ sim_tb: main_tb.cpp $(TB_OBJ_DIR)/Vtb_top__ALL.a $(TB_OBJ_DIR)/libverilated.a
 lint: $(SV_SOURCES)
 	$(VERILATOR) --lint-only --Wall --top-module $(TOP) $(SV_SOURCES)
 
+test_vint: $(VINT_TEST_SRCS)
+	$(CXX) $(VINT_CXXFLAGS) $(VINT_TEST_SRCS) -o test_vint -lgtest -lgtest_main -lpthread
+
 clean:
-	rm -rf $(OBJ_DIR) $(TB_OBJ_DIR) sim tb cpp.fst tb.fst
+	rm -rf $(OBJ_DIR) $(TB_OBJ_DIR) sim_cpp sim_tb test_vint libvint.a *.fst

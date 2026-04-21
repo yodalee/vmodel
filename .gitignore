@@ -1,6 +1,7 @@
 /obj_dir
 /obj_dir_tb
 /sim_*
+/test_*
 *.swp
 *.fst
 *.fst.hier
