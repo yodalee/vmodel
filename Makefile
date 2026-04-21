@@ -25,7 +25,7 @@ CXXFLAGS = -std=c++17 -O2 \
 
 .PHONY: all sim_cpp sim_tb lint clean
 
-all: sim_cpp
+all: sim_cpp sim_tb
 
 $(OBJ_DIR)/V$(TOP).mk: $(SV_SOURCES)
 	$(VERILATOR) $(VERILATOR_FLAGS) --top-module $(TOP) $(SV_SOURCES)
