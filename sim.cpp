@@ -72,12 +72,12 @@ public:
         out_ch_.data = inputs_[0];
     }
 
-    bool Transfer() const {
-        return out_vr_.transfer();
+    void Comb() {
+        did_transfer_ = out_vr_.transfer();
     }
 
-    void AdvanceAfterSeq(bool did_transfer) {
-        if (!did_transfer) {
+    void Seq() {
+        if (!did_transfer_) {
             return;
         }
 
@@ -89,6 +89,8 @@ public:
             out_ch_.valid = 0;
             out_ch_.data = 0;
         }
+
+        did_transfer_ = false;
     }
 
 private:
@@ -96,6 +98,7 @@ private:
     vmodel::ValidReadyOut<uint8_t> out_vr_;
     const std::vector<uint8_t>& inputs_;
     int input_idx_ = 0;
+    bool did_transfer_ = false;
 };
 
 class Sink {
@@ -107,18 +110,30 @@ public:
         in_ch_.ready = ready;
     }
 
-    void Observe(int cycle) {
+    void Comb() {
         if (!in_vr_.transfer()) {
+            got_transfer_ = false;
             return;
         }
 
-        const auto sample = in_vr_.snapshot();
-        const uint8_t got = sample.data;
+        got_transfer_ = true;
+        sampled_data_ = in_vr_.snapshot().data;
+    }
+
+    void Seq() {
+        if (!got_transfer_) {
+            ++cycle_;
+            return;
+        }
+
+        const uint8_t got = sampled_data_;
         printf("[cycle %4d] output[%2d]: got=%3u  expected=%3u  %s\n",
-               cycle, output_idx_, got, expected_[output_idx_],
+               cycle_, output_idx_, got, expected_[output_idx_],
                got == expected_[output_idx_] ? "OK" : "MISMATCH");
         assert(got == expected_[output_idx_]);
         ++output_idx_;
+        got_transfer_ = false;
+        ++cycle_;
     }
 
     bool Done() const {
@@ -138,6 +153,9 @@ private:
     vmodel::ValidReadyIn<uint8_t> in_vr_;
     const std::vector<uint8_t>& expected_;
     int output_idx_ = 0;
+    int cycle_ = 0;
+    bool got_transfer_ = false;
+    uint8_t sampled_data_ = 0;
 };
 
 int main(int argc, char** argv) {
@@ -158,11 +176,14 @@ int main(int argc, char** argv) {
 
     const int MAX_CYCLES = 2000;
     for (int cycle = 0; cycle < MAX_CYCLES && !sink.Done(); ++cycle) {
+        sink.Comb();
         dut.Comb();
-        const bool source_transfer = source.Transfer();
-        sink.Observe(cycle);
+        source.Comb();
+
+        // Sequential phase: order can be changed safely.
         dut.Seq();
-        source.AdvanceAfterSeq(source_transfer);
+        source.Seq();
+        sink.Seq();
     }
 
     if (sink.Done()) {
