@@ -21,6 +21,7 @@ TB_SV_SOURCES = $(SV_SOURCES) tb_top.sv
 
 CXX      = g++
 CXXFLAGS = -std=c++17 -O2 \
+           -Ivmodel \
            -I$(VERILATOR_ROOT)/include \
            -I$(VERILATOR_ROOT)/include/vltstd
 
