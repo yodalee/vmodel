@@ -41,17 +41,15 @@ public:
     const Top& dut() const { return *top_; }
 
     void Comb() {
+        tfp_->dump(sim_time_++);
+        top_->clk = 0;
         top_->eval();
+        tfp_->dump(sim_time_++);
     }
 
     void Seq() {
         top_->clk = 1;
         top_->eval();
-        tfp_->dump(sim_time_++);
-
-        top_->clk = 0;
-        top_->eval();
-        tfp_->dump(sim_time_++);
     }
 
     void Reset(int cycles = 5) {
@@ -61,12 +59,14 @@ public:
         tfp_->dump(sim_time_++);
 
         for (int cycle = 0; cycle < cycles; ++cycle) {
+            Comb();
             Seq();
         }
 
         top_->rst_n = 1;
 
         for (int cycle = 0; cycle < cycles; ++cycle) {
+            Comb();
             Seq();
         }
     }
