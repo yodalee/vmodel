@@ -15,7 +15,7 @@
 
 using Channel = vmodel::ValidReady<uint8_t>;
 
-class DUT {
+class DUT : public vmodel::IModule {
 public:
     DUT(int argc, char** argv, Channel& in_ch, Channel& out_ch)
         : top_(argc, argv, "cpp.fst"),
@@ -45,7 +45,7 @@ public:
         out_ch_.data = top_->o_data;
     }
 
-    void Seq() {
+    void Seq() override {
         top_.Seq();
     }
 
@@ -55,7 +55,7 @@ private:
     Channel& out_ch_;
 };
 
-class Source {
+class Source : public vmodel::IModule {
 public:
     Source(Channel& out_ch, const std::vector<uint8_t>& inputs)
         : out_ch_(out_ch), out_vr_(out_ch), inputs_(inputs) {}
@@ -100,7 +100,7 @@ private:
     bool did_transfer_ = false;
 };
 
-class Sink {
+class Sink : public vmodel::IModule {
 public:
     Sink(Channel& in_ch, const std::vector<uint8_t>& expected)
         : in_ch_(in_ch), in_vr_(in_ch), expected_(expected) {}

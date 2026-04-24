@@ -20,7 +20,7 @@ SV_SOURCES = \
 TB_SV_SOURCES = $(SV_SOURCES) tb_top.sv
 
 CXX      = g++
-CXXFLAGS = -std=c++17 -O2 \
+CXXFLAGS = -std=c++17 -O2 -Wall -Wno-sign-compare \
            -I. \
            -I$(VERILATOR_ROOT)/include \
            -I$(VERILATOR_ROOT)/include/vltstd
