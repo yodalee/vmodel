@@ -10,4 +10,11 @@ public:
     virtual void Seq() = 0;
 };
 
+class IChannel {
+public:
+    virtual ~IChannel() = default;
+    virtual IModule* upstream() const = 0;
+    virtual IModule* downstream() const = 0;
+};
+
 }; // namespace vmodel

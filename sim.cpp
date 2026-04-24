@@ -19,8 +19,10 @@ class DUT : public vmodel::IModule {
 public:
     DUT(int argc, char** argv, Channel& in_ch, Channel& out_ch)
         : top_(argc, argv, "cpp.fst"),
-          in_ch_(in_ch),
-          out_ch_(out_ch) {}
+          in_ch_(in_ch), out_ch_(out_ch) {
+            in_ch_.setDownstream(this);
+            out_ch_.setUpstream(this);
+        }
 
     void Reset() {
         top_->clk = 0;
@@ -58,7 +60,9 @@ private:
 class Source : public vmodel::IModule {
 public:
     Source(Channel& out_ch, const std::vector<uint8_t>& inputs)
-        : out_ch_(out_ch), inputs_(inputs) {}
+        : out_ch_(out_ch), inputs_(inputs) {
+        out_ch_.setUpstream(this);
+    }
 
     void Prime() {
         if (inputs_.empty()) {
@@ -102,7 +106,9 @@ private:
 class Sink : public vmodel::IModule {
 public:
     Sink(Channel& in_ch, const std::vector<uint8_t>& expected)
-        : in_ch_(in_ch), expected_(expected) {}
+        : in_ch_(in_ch), expected_(expected) {
+        in_ch_.setDownstream(this);
+    }
 
     void SetReady(bool ready) {
         in_ch_.ready = ready;
@@ -166,6 +172,7 @@ int main(int argc, char** argv) {
     DUT dut(argc, argv, source_to_dut, dut_to_sink);
     Source source(source_to_dut, inputs);
     Sink sink(dut_to_sink, expected);
+    vmodel::SimGraph graph({&source, &dut, &sink}, {&source_to_dut, &dut_to_sink});
 
     sink.SetReady(true);
     dut.Reset();
@@ -173,14 +180,9 @@ int main(int argc, char** argv) {
 
     const int MAX_CYCLES = 2000;
     for (int cycle = 0; cycle < MAX_CYCLES && !sink.Done(); ++cycle) {
-        sink.Comb();
-        dut.Comb();
-        source.Comb();
-
+        graph.Comb();
         // Sequential phase: order can be changed safely.
-        dut.Seq();
-        source.Seq();
-        sink.Seq();
+        graph.Seq();
     }
 
     if (sink.Done()) {

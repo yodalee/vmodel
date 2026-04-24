@@ -4,3 +4,4 @@
 #include "vmodel/vmod.h"
 #include "vmodel/vmodel_base.h"
 #include "vmodel/shim.h"
+#include "vmodel/simgraph.h"

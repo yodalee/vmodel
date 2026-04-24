@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vmodel/vmodel_base.h"
+
 #include <cassert>
 #include <cstdint>
 
@@ -7,7 +9,7 @@ namespace vmodel {
 
 // Simple valid/ready handshake container.
 template <typename Req>
-struct ValidReady {
+struct ValidReady : public IChannel {
     uint8_t valid = 0;
     uint8_t ready = 0;
     Req data{};
@@ -22,6 +24,16 @@ struct ValidReady {
 
     ValidReady<Req> snapshot() const { return *this; }
     bool transfer() const { return getValid() && getReady(); }
+
+    void setUpstream(IModule* m) { upstream_ = m; }
+    void setDownstream(IModule* m) { downstream_ = m; }
+
+    IModule* upstream() const override { return upstream_; }
+    IModule* downstream() const override { return downstream_; }
+
+private:
+    IModule* upstream_ = nullptr;
+    IModule* downstream_ = nullptr;
 };
 
 // Host -> DUT interface wrapper.
