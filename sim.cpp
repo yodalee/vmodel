@@ -7,8 +7,7 @@
 // Waveform dumped to cpp.fst
 
 #include "VTop.h"
-#include "shim.h"
-#include "vmod.h"
+#include "vmodel/vmodel.h"
 
 #include <cassert>
 #include <cstdio>
