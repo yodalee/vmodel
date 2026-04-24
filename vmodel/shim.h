@@ -19,6 +19,9 @@ struct ValidReady {
     bool getValid() const { return valid != 0; }
     bool getReady() const { return ready != 0; }
     Req getData() const { return data; }
+
+    ValidReady<Req> snapshot() const { return *this; }
+    bool transfer() const { return getValid() && getReady(); }
 };
 
 // Host -> DUT interface wrapper.

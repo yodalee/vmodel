@@ -58,7 +58,7 @@ private:
 class Source : public vmodel::IModule {
 public:
     Source(Channel& out_ch, const std::vector<uint8_t>& inputs)
-        : out_ch_(out_ch), out_vr_(out_ch), inputs_(inputs) {}
+        : out_ch_(out_ch), inputs_(inputs) {}
 
     void Prime() {
         if (inputs_.empty()) {
@@ -72,7 +72,7 @@ public:
     }
 
     void Comb() {
-        did_transfer_ = out_vr_.transfer();
+        did_transfer_ = out_ch_.transfer();
     }
 
     void Seq() {
@@ -94,7 +94,6 @@ public:
 
 private:
     Channel& out_ch_;
-    vmodel::ValidReadyOut<uint8_t> out_vr_;
     const std::vector<uint8_t>& inputs_;
     int input_idx_ = 0;
     bool did_transfer_ = false;
@@ -103,20 +102,20 @@ private:
 class Sink : public vmodel::IModule {
 public:
     Sink(Channel& in_ch, const std::vector<uint8_t>& expected)
-        : in_ch_(in_ch), in_vr_(in_ch), expected_(expected) {}
+        : in_ch_(in_ch), expected_(expected) {}
 
     void SetReady(bool ready) {
         in_ch_.ready = ready;
     }
 
     void Comb() {
-        if (!in_vr_.transfer()) {
+        if (!in_ch_.transfer()) {
             got_transfer_ = false;
             return;
         }
 
         got_transfer_ = true;
-        sampled_data_ = in_vr_.snapshot().data;
+        sampled_data_ = in_ch_.snapshot().data;
     }
 
     void Seq() {
@@ -149,7 +148,6 @@ public:
 
 private:
     Channel& in_ch_;
-    vmodel::ValidReadyIn<uint8_t> in_vr_;
     const std::vector<uint8_t>& expected_;
     int output_idx_ = 0;
     int cycle_ = 0;
