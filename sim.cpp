@@ -19,10 +19,8 @@ class DUT : public vmodel::IModule {
 public:
     DUT(int argc, char** argv, Channel& in_ch, Channel& out_ch)
         : top_(argc, argv, "cpp.fst"),
-          in_ch_(in_ch), out_ch_(out_ch) {
-            in_ch_.setDownstream(this);
-            out_ch_.setUpstream(this);
-        }
+          in_ch_(in_ch),
+          out_ch_(out_ch) {}
 
     void Reset() {
         top_->clk = 0;
@@ -60,9 +58,7 @@ private:
 class Source : public vmodel::IModule {
 public:
     Source(Channel& out_ch, const std::vector<uint8_t>& inputs)
-        : out_ch_(out_ch), inputs_(inputs) {
-        out_ch_.setUpstream(this);
-    }
+        : out_ch_(out_ch), inputs_(inputs) {}
 
     void Prime() {
         if (inputs_.empty()) {
@@ -106,9 +102,7 @@ private:
 class Sink : public vmodel::IModule {
 public:
     Sink(Channel& in_ch, const std::vector<uint8_t>& expected)
-        : in_ch_(in_ch), expected_(expected) {
-        in_ch_.setDownstream(this);
-    }
+        : in_ch_(in_ch), expected_(expected) {}
 
     void SetReady(bool ready) {
         in_ch_.ready = ready;
@@ -166,13 +160,20 @@ int main(int argc, char** argv) {
     const std::vector<uint8_t> inputs   = {3, 1};
     const std::vector<uint8_t> expected = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 1, 2, 2};
 
-    Channel source_to_dut;
-    Channel dut_to_sink;
+    vmodel::SimGraph graph;
+    Channel& source_to_dut = graph.CreateChannel<Channel>();
+    Channel& dut_to_sink = graph.CreateChannel<Channel>();
 
     DUT dut(argc, argv, source_to_dut, dut_to_sink);
     Source source(source_to_dut, inputs);
     Sink sink(dut_to_sink, expected);
-    vmodel::SimGraph graph({&source, &dut, &sink}, {&source_to_dut, &dut_to_sink});
+
+    graph.AddModule(&source);
+    graph.AddModule(&dut);
+    graph.AddModule(&sink);
+    graph.Connect(source_to_dut, &source, &dut);
+    graph.Connect(dut_to_sink, &dut, &sink);
+    graph.Compile();
 
     sink.SetReady(true);
     dut.Reset();

@@ -25,8 +25,8 @@ struct ValidReady : public IChannel {
     ValidReady<Req> snapshot() const { return *this; }
     bool transfer() const { return getValid() && getReady(); }
 
-    void setUpstream(IModule* m) { upstream_ = m; }
-    void setDownstream(IModule* m) { downstream_ = m; }
+    void setUpstream(IModule* m) override { upstream_ = m; }
+    void setDownstream(IModule* m) override { downstream_ = m; }
 
     IModule* upstream() const override { return upstream_; }
     IModule* downstream() const override { return downstream_; }

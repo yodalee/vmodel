@@ -13,6 +13,8 @@ public:
 class IChannel {
 public:
     virtual ~IChannel() = default;
+    virtual void setUpstream(IModule* m) = 0;
+    virtual void setDownstream(IModule* m) = 0;
     virtual IModule* upstream() const = 0;
     virtual IModule* downstream() const = 0;
 };
