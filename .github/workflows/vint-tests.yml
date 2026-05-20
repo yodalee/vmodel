@@ -1,0 +1,23 @@
+name: Vint Tests
+
+on:
+  pull_request:
+
+jobs:
+  test-vint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential make libgtest-dev libboost-dev
+
+      - name: Build vint tests
+        run: make test_vint
+
+      - name: Run vint tests
+        run: ./test_vint
