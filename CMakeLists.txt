@@ -60,15 +60,15 @@ verilate(verilated_repeat
 )
 
 # C++ simulation executables
-add_executable(sim_cpp sim.cpp)
-target_include_directories(sim_cpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_options(sim_cpp PRIVATE -Wall -Wno-sign-compare)
-target_link_libraries(sim_cpp PRIVATE verilated_top z)
+add_executable(sim_cpptop sim/sim_cpptop.cpp)
+target_include_directories(sim_cpptop PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_options(sim_cpptop PRIVATE -Wall -Wno-sign-compare)
+target_link_libraries(sim_cpptop PRIVATE verilated_top z)
 
-add_executable(sim_tb main_tb.cpp)
-target_include_directories(sim_tb PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_options(sim_tb PRIVATE -Wall -Wno-sign-compare)
-target_link_libraries(sim_tb PRIVATE verilated_tb_top z)
+add_executable(sim_testbench sim/sim_testbench.cpp)
+target_include_directories(sim_testbench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_options(sim_testbench PRIVATE -Wall -Wno-sign-compare)
+target_link_libraries(sim_testbench PRIVATE verilated_tb_top z)
 
 add_executable(test_vint ${VINT_TEST_SRCS})
 target_include_directories(test_vint PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -83,5 +83,5 @@ endif()
 
 # Build all requested binaries with the default target
 add_custom_target(all_bins ALL
-    DEPENDS sim_cpp sim_tb test_vint
+    DEPENDS sim_cpptop sim_testbench test_vint
 )
