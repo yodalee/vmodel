@@ -1,7 +1,4 @@
-/obj_dir
-/obj_dir_tb
-/sim_*
-/test_*
+/build
 *.swp
 *.fst
 *.fst.hier
