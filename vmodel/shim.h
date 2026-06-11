@@ -44,25 +44,13 @@ public:
     explicit ValidReadyIn(ValidReady<Req>& vr)
         : vr_(vr) {}
 
-    void drive(const ValidReady<Req>& v) const {
-        vr_.setValid(v.getValid());
-        vr_.setData(v.getData());
-    }
-
-    bool ready() const {
+    bool can_write() const {
         return vr_.getReady();
     }
 
-    ValidReady<Req> snapshot() const {
-        ValidReady<Req> s;
-        s.valid = vr_.valid;
-        s.ready = vr_.ready;
-        s.data = vr_.data;
-        return s;
-    }
-
-    bool transfer() const {
-        return vr_.getValid() && vr_.getReady();
+    void write(Req d) const {
+        vr_.setValid(true);
+        vr_.setData(d);
     }
 
 private:
@@ -77,20 +65,13 @@ public:
     explicit ValidReadyOut(ValidReady<Req>& vr)
         : vr_(vr) {}
 
-    ValidReady<Req> sample() const {
-        ValidReady<Req> s;
-        s.valid = vr_.valid;
-        s.ready = vr_.ready;
-        s.data = vr_.data;
-        return s;
+    bool can_read() const {
+        return vr_.getValid();
     }
 
-    void set_ready(bool r) const {
-        vr_.setReady(r);
-    }
-
-    bool transfer() const {
-        return vr_.getValid() && vr_.getReady();
+    Req read() const {
+        assert(can_read());
+        return vr_.getData();
     }
 
 private:
