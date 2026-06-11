@@ -49,6 +49,16 @@ verilate(verilated_plus1
     TRACE_FST
 )
 
+add_library(verilated_foreach STATIC)
+verilate(verilated_foreach
+    PREFIX VForEach
+    SOURCES rtl/ForEach.sv
+    INCLUDE_DIRS ${RTL_DIR}
+    TOP_MODULE ForEach
+    VERILATOR_ARGS --Wall
+    TRACE_FST
+)
+
 add_library(verilated_repeat STATIC)
 verilate(verilated_repeat
     PREFIX VRepeat
