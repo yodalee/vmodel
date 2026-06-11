@@ -74,6 +74,7 @@ public:
 
     void Seq() {
         for (auto* m : all_) m->Seq();
+        for (auto* ch : channels_) ch->Seq();
     }
 
 private:

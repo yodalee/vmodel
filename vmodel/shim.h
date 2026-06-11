@@ -10,17 +10,35 @@ namespace vmodel {
 // Simple valid/ready handshake container.
 template <typename Req>
 struct ValidReady : public IChannel {
+    // valid/data are committed on Seq(); ready is immediate.
     bool valid = false;
+    bool valid_next = false;
     bool ready = false;
     Req data{};
+    Req data_next{};
 
-    void setValid(bool v) { valid = v; }
+    void setValid(bool v) { valid_next = v; }
     void setReady(bool r) { ready = r; }
-    void setData(Req d) { data = d; }
+    void setData(Req d) { data_next = d; }
+
+    // Initialization helpers for values that must be visible before first Seq.
+    void initValid(bool v) {
+        valid = v;
+        valid_next = v;
+    }
+    void initData(Req d) {
+        data = d;
+        data_next = d;
+    }
 
     bool getValid() const { return valid; }
     bool getReady() const { return ready; }
     Req getData() const { return data; }
+
+    void Seq() override {
+        valid = valid_next;
+        data = data_next;
+    }
 
     ValidReady<Req> snapshot() const { return *this; }
     bool transfer() const { return getValid() && getReady(); }
