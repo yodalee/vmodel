@@ -9,7 +9,7 @@ namespace vmodel {
 
 // Simple valid/ready handshake container.
 template <typename Req>
-struct ValidReady : public IChannel {
+struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
     // valid/data are committed on Seq(); ready is immediate.
     bool valid = false;
     bool valid_next = false;
@@ -35,6 +35,18 @@ struct ValidReady : public IChannel {
     bool getReady() const { return ready; }
     Req getData() const { return data; }
 
+    bool can_write() const override { return getReady(); }
+    void write(Req req) override {
+        setValid(true);
+        setData(req);
+    }
+
+    bool can_read() const override { return getValid(); }
+    Req read() const override {
+        assert(can_read());
+        return getData();
+    }
+
     void Seq() override {
         valid = valid_next;
         data = data_next;
@@ -57,16 +69,16 @@ private:
 // Host -> DUT interface wrapper.
 // Host drives valid/data and reads ready.
 template <typename Req>
-class ValidReadyIn {
+class ValidReadyIn : public IChannelWrite<Req> {
 public:
     explicit ValidReadyIn(ValidReady<Req>& vr)
         : vr_(vr) {}
 
-    bool can_write() const {
+    bool can_write() const override {
         return vr_.getReady();
     }
 
-    void write(Req d) const {
+    void write(Req d) const override {
         vr_.setValid(true);
         vr_.setData(d);
     }
@@ -78,16 +90,16 @@ private:
 // DUT -> Host interface wrapper.
 // Host reads valid/data and drives ready.
 template <typename Req>
-class ValidReadyOut {
+class ValidReadyOut : public IChannelRead<Req> {
 public:
     explicit ValidReadyOut(ValidReady<Req>& vr)
         : vr_(vr) {}
 
-    bool can_read() const {
+    bool can_read() const override {
         return vr_.getValid();
     }
 
-    Req read() const {
+    Req read() const override {
         assert(can_read());
         return vr_.getData();
     }

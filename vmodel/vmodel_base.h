@@ -20,4 +20,20 @@ public:
     virtual IModule* downstream() const = 0;
 };
 
+template <typename Req>
+class IChannelWrite {
+public:
+    virtual ~IChannelWrite() = default;
+    virtual bool can_write() const = 0;
+    virtual void write(Req req) = 0;
+};
+
+template <typename Req>
+class IChannelRead {
+public:
+    virtual ~IChannelRead() = default;
+    virtual bool can_read() const = 0;
+    virtual Req read() const = 0;
+};
+
 }; // namespace vmodel
