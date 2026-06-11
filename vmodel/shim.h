@@ -10,16 +10,16 @@ namespace vmodel {
 // Simple valid/ready handshake container.
 template <typename Req>
 struct ValidReady : public IChannel {
-    uint8_t valid = 0;
-    uint8_t ready = 0;
+    bool valid = false;
+    bool ready = false;
     Req data{};
 
-    void setValid(bool v) { valid = v ? 1 : 0; }
-    void setReady(bool r) { ready = r ? 1 : 0; }
+    void setValid(bool v) { valid = v; }
+    void setReady(bool r) { ready = r; }
     void setData(Req d) { data = d; }
 
-    bool getValid() const { return valid != 0; }
-    bool getReady() const { return ready != 0; }
+    bool getValid() const { return valid; }
+    bool getReady() const { return ready; }
     Req getData() const { return data; }
 
     ValidReady<Req> snapshot() const { return *this; }
