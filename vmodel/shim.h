@@ -17,43 +17,30 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
     Req data{};
     Req data_next{};
 
-    void setValid(bool v) { valid_next = v; }
-    void setReady(bool r) { ready = r; }
-    void setData(Req d) { data_next = d; }
-
-    // Initialization helpers for values that must be visible before first Seq.
-    void initValid(bool v) {
-        valid = v;
-        valid_next = v;
-    }
-    void initData(Req d) {
-        data = d;
-        data_next = d;
+    void Reset() {
+        valid = false;
+        valid_next = false;
+        ready = false;
+        data = Req{};
+        data_next = Req{};
     }
 
-    bool getValid() const { return valid; }
-    bool getReady() const { return ready; }
-    Req getData() const { return data; }
-
-    bool can_write() const override { return getReady(); }
+    bool can_write() const override { return ready; }
     void write(Req req) override {
-        setValid(true);
-        setData(req);
+        valid_next = true;
+        data_next = req;
     }
 
-    bool can_read() const override { return getValid(); }
+    bool can_read() const override { return valid; }
     Req read() const override {
         assert(can_read());
-        return getData();
+        return data;
     }
 
     void Seq() override {
         valid = valid_next;
         data = data_next;
     }
-
-    ValidReady<Req> snapshot() const { return *this; }
-    bool transfer() const { return getValid() && getReady(); }
 
     void setUpstream(IModule* m) override { upstream_ = m; }
     void setDownstream(IModule* m) override { downstream_ = m; }
@@ -75,12 +62,12 @@ public:
         : vr_(vr) {}
 
     bool can_write() const override {
-        return vr_.getReady();
+        return vr_.ready;
     }
 
     void write(Req d) const override {
-        vr_.setValid(true);
-        vr_.setData(d);
+        vr_.valid_next = true;
+        vr_.data_next = d;
     }
 
 private:
@@ -96,12 +83,12 @@ public:
         : vr_(vr) {}
 
     bool can_read() const override {
-        return vr_.getValid();
+        return vr_.valid;
     }
 
     Req read() const override {
         assert(can_read());
-        return vr_.getData();
+        return vr_.data;
     }
 
 private:

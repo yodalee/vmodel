@@ -32,17 +32,17 @@ public:
 
     void Comb() {
         // Drive DUT input ports from source channel.
-        top_->i_valid = in_ch_.getValid();
-        top_->i_data = in_ch_.getData();
+        top_->i_valid = in_ch_.valid;
+        top_->i_data = in_ch_.data;
         // Drive DUT output ready from sink channel.
-        top_->o_ready = out_ch_.getReady();
+        top_->o_ready = out_ch_.ready;
 
         top_.Comb();
 
         // Publish DUT handshakes/data back to channels.
-        in_ch_.setReady(top_->i_ready);
-        out_ch_.setValid(top_->o_valid);
-        out_ch_.setData(top_->o_data);
+        in_ch_.ready = top_->i_ready;
+        out_ch_.valid_next = top_->o_valid;
+        out_ch_.data_next = top_->o_data;
     }
 
     void Seq() override {
@@ -60,19 +60,23 @@ public:
     Source(Channel& out_ch, const std::vector<uint8_t>& inputs)
         : out_ch_(out_ch), inputs_(inputs) {}
 
-    void Prime() {
+    void Reset() {
         if (inputs_.empty()) {
-            out_ch_.initValid(false);
-            out_ch_.initData(0);
+            out_ch_.valid = false;
+            out_ch_.valid_next = false;
+            out_ch_.data = 0;
+            out_ch_.data_next = 0;
             return;
         }
 
-        out_ch_.initValid(true);
-        out_ch_.initData(inputs_[0]);
+        out_ch_.valid = true;
+        out_ch_.valid_next = true;
+        out_ch_.data = inputs_[0];
+        out_ch_.data_next = inputs_[0];
     }
 
     void Comb() {
-        did_transfer_ = out_ch_.transfer();
+        did_transfer_ = out_ch_.valid && out_ch_.ready;
     }
 
     void Seq() {
@@ -82,11 +86,11 @@ public:
 
         ++input_idx_;
         if (input_idx_ < (int)inputs_.size()) {
-            out_ch_.setValid(true);
-            out_ch_.setData(inputs_[input_idx_]);
+            out_ch_.valid_next = true;
+            out_ch_.data_next = inputs_[input_idx_];
         } else {
-            out_ch_.setValid(false);
-            out_ch_.setData(0);
+            out_ch_.valid_next = false;
+            out_ch_.data_next = 0;
         }
 
         did_transfer_ = false;
@@ -105,17 +109,17 @@ public:
         : in_ch_(in_ch), expected_(expected) {}
 
     void SetReady(bool ready) {
-        in_ch_.setReady(ready);
+        in_ch_.ready = ready;
     }
 
     void Comb() {
-        if (!in_ch_.transfer()) {
+        if (!(in_ch_.valid && in_ch_.ready)) {
             got_transfer_ = false;
             return;
         }
 
         got_transfer_ = true;
-        sampled_data_ = in_ch_.getData();
+        sampled_data_ = in_ch_.data;
     }
 
     void Seq() {
@@ -177,7 +181,7 @@ int main(int argc, char** argv) {
 
     sink.SetReady(true);
     dut.Reset();
-    source.Prime();
+    source.Reset();
 
     const int MAX_CYCLES = 2000;
     for (int cycle = 0; cycle < MAX_CYCLES && !sink.Done(); ++cycle) {
