@@ -41,8 +41,8 @@ public:
 
         // Publish DUT handshakes/data back to channels.
         in_ch_.ready = top_->i_ready;
-        out_ch_.setValid(top_->o_valid);
-        out_ch_.setData(top_->o_data);
+        out_ch_.valid_next = top_->o_valid;
+        out_ch_.data_next = top_->o_data;
     }
 
     void Seq() override {
@@ -62,13 +62,13 @@ public:
 
     void Prime() {
         if (inputs_.empty()) {
-            out_ch_.setValid(0);
-            out_ch_.setData(0);
+            out_ch_.valid_next = 0;
+            out_ch_.data_next = 0;
             return;
         }
 
-        out_ch_.setValid(1);
-        out_ch_.setData(inputs_[0]);
+        out_ch_.valid_next = 1;
+        out_ch_.data_next = inputs_[0];
     }
 
     void Comb() {
@@ -82,11 +82,11 @@ public:
 
         ++input_idx_;
         if (input_idx_ < (int)inputs_.size()) {
-            out_ch_.setValid(1);
-            out_ch_.setData(inputs_[input_idx_]);
+            out_ch_.valid_next = 1;
+            out_ch_.data_next = inputs_[input_idx_];
         } else {
-            out_ch_.setValid(0);
-            out_ch_.setData(0);
+            out_ch_.valid_next = 0;
+            out_ch_.data_next = 0;
         }
 
         did_transfer_ = false;
