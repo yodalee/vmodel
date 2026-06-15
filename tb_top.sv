@@ -42,7 +42,7 @@ module tb_top;
     // Clock: 10 ns period
     // ----------------------------------------------------------------
     initial clk = 1'b0;
-    always #5 clk = ~clk;
+    always #5 clk <= ~clk;
 
     // ----------------------------------------------------------------
     // Expected output sequence
