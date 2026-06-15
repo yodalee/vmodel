@@ -14,10 +14,13 @@ jobs:
       - name: Install test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential make libgtest-dev libboost-dev
+          sudo apt-get install -y build-essential cmake ninja-build verilator libgtest-dev libboost-dev
+
+      - name: Configure CMake
+        run: cmake -S . -B build -G Ninja
 
       - name: Build vint tests
-        run: make test_vint
+        run: cmake --build build --target test_vint
 
       - name: Run vint tests
-        run: ./test_vint
+        run: ctest --test-dir build --output-on-failure -R VintTests

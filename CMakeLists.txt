@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+enable_testing()
+
 find_package(verilator HINTS $ENV{VERILATOR_ROOT} REQUIRED)
 
 set(RTL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/rtl)
@@ -83,13 +85,10 @@ target_link_libraries(sim_testbench PRIVATE verilated_tb_top z)
 add_executable(test_vint ${VINT_TEST_SRCS})
 target_include_directories(test_vint PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(test_vint PRIVATE -Wall)
+target_link_libraries(test_vint PRIVATE gtest gtest_main)
 
-find_package(GTest QUIET)
-if (GTest_FOUND)
-    target_link_libraries(test_vint PRIVATE GTest::gtest GTest::gtest_main pthread)
-else()
-    target_link_libraries(test_vint PRIVATE gtest gtest_main pthread)
-endif()
+# Register the test with CTest
+add_test(NAME VintTests COMMAND test_vint)
 
 # Build all requested binaries with the default target
 add_custom_target(all_bins ALL
