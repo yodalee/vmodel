@@ -11,12 +11,14 @@ namespace vmodel {
 template <typename Req>
 struct ValidReady : public IChannel {
     bool valid = false;
+    bool valid_next = false;
     bool ready = false;
     Req data{};
+    Req data_next{};
 
-    void setValid(bool v) { valid = v; }
+    void setValid(bool v) { valid_next = v; }
     void setReady(bool r) { ready = r; }
-    void setData(Req d) { data = d; }
+    void setData(Req d) { data_next = d; }
 
     bool getValid() const { return valid; }
     bool getReady() const { return ready; }
@@ -24,6 +26,11 @@ struct ValidReady : public IChannel {
 
     ValidReady<Req> snapshot() const { return *this; }
     bool transfer() const { return getValid() && getReady(); }
+
+    void Seq() override {
+        valid = valid_next;
+        data = data_next;
+    }
 
     void setUpstream(IModule* m) override { upstream_ = m; }
     void setDownstream(IModule* m) override { downstream_ = m; }
