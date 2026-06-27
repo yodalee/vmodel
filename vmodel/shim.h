@@ -9,21 +9,29 @@ namespace vmodel {
 
 // Simple valid/ready handshake container.
 template <typename Req>
-struct ValidReady : public IChannel {
-    uint8_t valid = 0;
-    uint8_t ready = 0;
+struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+    bool valid = false;
+    bool valid_next = false;
+    bool ready = false;
     Req data{};
-
-    void setValid(bool v) { valid = v ? 1 : 0; }
-    void setReady(bool r) { ready = r ? 1 : 0; }
-    void setData(Req d) { data = d; }
-
-    bool getValid() const { return valid != 0; }
-    bool getReady() const { return ready != 0; }
-    Req getData() const { return data; }
+    Req data_next{};
 
     ValidReady<Req> snapshot() const { return *this; }
-    bool transfer() const { return getValid() && getReady(); }
+    bool transfer() const { return valid && ready; }
+
+    bool can_write() const override { return ready; }
+    void write(Req d) override {
+        valid_next = true;
+        data_next = d;
+    }
+
+    bool can_read() const override { return valid; }
+    Req read() const override { return data; }
+
+    void Seq() override {
+        valid = valid_next;
+        data = data_next;
+    }
 
     void setUpstream(IModule* m) override { upstream_ = m; }
     void setDownstream(IModule* m) override { downstream_ = m; }
@@ -39,18 +47,26 @@ private:
 // Host -> DUT interface wrapper.
 // Host drives valid/data and reads ready.
 template <typename Req>
-class ValidReadyIn {
+class ValidReadyIn : public IChannelWrite<Req> {
 public:
     explicit ValidReadyIn(ValidReady<Req>& vr)
         : vr_(vr) {}
 
+    bool can_write() const override {
+        return vr_.can_write();
+    }
+
+    void write(Req d) override {
+        vr_.write(d);
+    }
+
     void drive(const ValidReady<Req>& v) const {
-        vr_.setValid(v.getValid());
-        vr_.setData(v.getData());
+        vr_.valid_next = v.valid;
+        vr_.data_next = v.data;
     }
 
     bool ready() const {
-        return vr_.getReady();
+        return vr_.ready;
     }
 
     ValidReady<Req> snapshot() const {
@@ -62,7 +78,7 @@ public:
     }
 
     bool transfer() const {
-        return vr_.getValid() && vr_.getReady();
+        return vr_.valid && vr_.ready;
     }
 
 private:
@@ -72,10 +88,18 @@ private:
 // DUT -> Host interface wrapper.
 // Host reads valid/data and drives ready.
 template <typename Req>
-class ValidReadyOut {
+class ValidReadyOut : public IChannelRead<Req> {
 public:
     explicit ValidReadyOut(ValidReady<Req>& vr)
         : vr_(vr) {}
+
+    bool can_read() const override {
+        return vr_.can_read();
+    }
+
+    Req read() const override {
+        return vr_.read();
+    }
 
     ValidReady<Req> sample() const {
         ValidReady<Req> s;
@@ -86,11 +110,11 @@ public:
     }
 
     void set_ready(bool r) const {
-        vr_.setReady(r);
+        vr_.ready = r;
     }
 
     bool transfer() const {
-        return vr_.getValid() && vr_.getReady();
+        return vr_.valid && vr_.ready;
     }
 
 private:
