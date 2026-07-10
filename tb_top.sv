@@ -77,6 +77,7 @@ module tb_top;
 
         #50;
 
+        @(posedge clk);
         send_input(8'd3);
         send_input(8'd1);
     end
