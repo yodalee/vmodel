@@ -11,16 +11,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Verilator
+        uses: v0xnihili/install-verilator-action@main
+        run: verilator --version
+
       - name: Install test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build verilator libgtest-dev libboost-dev
+          sudo apt-get install -y build-essential cmake ninja-build libgtest-dev libboost-dev
 
       - name: Configure CMake
         run: cmake -S . -B build -G Ninja
 
-      - name: Build vint tests
-        run: cmake --build build --target test_vint
+      - name: Build CI targets
+        run: cmake --build build --target sim_cpptop sim_testbench test_vint
+
+      - name: Run sim_cpptop
+        run: ./build/sim_cpptop
+
+      - name: Run sim_testbench
+        run: ./build/sim_testbench
 
       - name: Run vint tests
         run: ctest --test-dir build --output-on-failure -R VintTests
