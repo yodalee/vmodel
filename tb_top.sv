@@ -1,10 +1,10 @@
 // Verilog testbench for Top (Plus1 → ForEach → Repeat)
 //
 // Feeds inputs 1 and 3, verifies the output sequence:
-//   N=1 → Plus1→2, ForEach→[1,2], Repeat→[1, 2,2]              => [1, 2, 2]
 //   N=3 → Plus1→4, ForEach→[1,2,3,4],
 //          Repeat→[1, 2,2, 3,3,3, 4,4,4,4]                      => [1,2,2,3,3,3,4,4,4,4]
-// Combined: [1, 2, 2, 1, 2, 2, 3, 3, 3, 4, 4, 4, 4]
+//   N=1 → Plus1→2, ForEach→[1,2], Repeat→[1, 2,2]              => [1, 2, 2]
+// Combined: [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 1, 2, 2, 2]
 //
 // Clock period : 10 ns
 // Reset active : deasserts at a random cycle between 5 and 10
@@ -97,13 +97,6 @@ module tb_top;
                 $display("output[%2d]: got %3d  OK", out_idx, o_data);
             end
             out_idx <= out_idx + 1;
-            if (out_idx == NUM_OUTPUTS) begin
-                if (errors == 0)
-                    $display("\nPASS: all %0d outputs matched.", NUM_OUTPUTS);
-                else
-                    $display("\nFAIL: %0d mismatch(es).", errors);
-                $finish;
-            end
         end
     end
 
@@ -112,7 +105,17 @@ module tb_top;
     // ----------------------------------------------------------------
     initial begin
         #200000;
-        $finish;
+        if (out_idx == NUM_OUTPUTS) begin
+            if (errors == 0)
+                $display("\nPASS: all %0d outputs matched.", NUM_OUTPUTS);
+            else
+                $display("\nFAIL: %0d mismatch(es).", errors);
+            $finish;
+        end
+        else begin
+            $error("Watchdog timeout: only %0d outputs received (expected %0d).",
+                   out_idx, NUM_OUTPUTS);
+        end
     end
 
 endmodule
