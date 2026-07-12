@@ -32,17 +32,27 @@ public:
 
     void Comb() {
         // Drive DUT input ports from source channel.
-        top_->i_valid = in_ch_.valid_next;
-        top_->i_data = in_ch_.data_next;
-        // Drive DUT output ready from sink channel.
-        top_->o_ready = out_ch_.ready;
+        bool can_read = in_ch_.can_read();
+        if (can_read) {
+            top_->i_valid = can_read;
+            top_->i_data = in_ch_.peek();
+        }
+
+        // Drive the DUT output ports from sink channel
+        bool can_write = out_ch_.can_write();
+        top_->o_ready = can_write;
 
         top_.Comb();
 
-        // Publish DUT handshakes/data back to channels.
-        in_ch_.ready = top_->i_ready;
-        out_ch_.valid_next = top_->o_valid;
-        out_ch_.data_next = top_->o_data;
+        // If input port has done a transaction, read the data.
+        if (top_->i_ready && can_read) {
+            in_ch_.read();
+        }
+
+        // If output port has done a transaction, write the data
+        if (top_->o_valid && can_write) {
+            out_ch_.write(top_->o_data);
+        }
     }
 
     void Seq() override {
