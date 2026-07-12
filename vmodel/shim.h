@@ -16,9 +16,6 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
     Req data{};
     Req data_next{};
 
-    ValidReady<Req> snapshot() const { return *this; }
-    bool transfer() const { return valid && ready; }
-
     bool can_write() const override { return ready; }
     void write(Req d) override {
         valid_next = true;
@@ -99,7 +96,7 @@ public:
     explicit ValidReadyOut(ValidReady<Req>& vr)
         : vr_(vr) {}
 
-    bool can_read() const override {
+    bool can_read() override {
         return vr_.can_read();
     }
 
