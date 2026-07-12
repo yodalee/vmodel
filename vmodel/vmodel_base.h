@@ -33,7 +33,8 @@ class IChannelRead {
 public:
     virtual ~IChannelRead() = default;
     virtual bool can_read() const = 0;
-    virtual Req read() const = 0;
+    virtual Req read() = 0;
+    virtual Req peek() const = 0;
 };
 
 }; // namespace vmodel
