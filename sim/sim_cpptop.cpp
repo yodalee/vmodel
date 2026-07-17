@@ -32,17 +32,27 @@ public:
 
     void Comb() {
         // Drive DUT input ports from source channel.
-        top_->i_valid = in_ch_.valid_next;
-        top_->i_data = in_ch_.data_next;
-        // Drive DUT output ready from sink channel.
-        top_->o_ready = out_ch_.ready;
+        bool can_read = in_ch_.can_read();
+        if (can_read) {
+            top_->i_valid = can_read;
+            top_->i_data = in_ch_.peek();
+        }
+
+        // Drive the DUT output ports from sink channel
+        bool can_write = out_ch_.can_write();
+        top_->o_ready = can_write;
 
         top_.Comb();
 
-        // Publish DUT handshakes/data back to channels.
-        in_ch_.ready = top_->i_ready;
-        out_ch_.valid_next = top_->o_valid;
-        out_ch_.data_next = top_->o_data;
+        // If input port has done a transaction, read the data.
+        if (top_->i_ready && can_read) {
+            in_ch_.read();
+        }
+
+        // If output port has done a transaction, write the data
+        if (top_->o_valid && can_write) {
+            out_ch_.write(top_->o_data);
+        }
     }
 
     void Seq() override {
@@ -60,19 +70,15 @@ public:
     Source(Channel& out_ch, const std::vector<uint8_t>& inputs)
         : out_ch_(out_ch), inputs_(inputs) {}
 
-    void Prime() {
+    void Reset() {
         if (inputs_.empty()) {
-            out_ch_.valid_next = 0;
-            out_ch_.data_next = 0;
             return;
         }
-
-        out_ch_.valid_next = 1;
-        out_ch_.data_next = inputs_[0];
+        out_ch_.write(inputs_[0]);
     }
 
     void Comb() {
-        did_transfer_ = out_ch_.transfer();
+        did_transfer_ = out_ch_.can_write();
     }
 
     void Seq() {
@@ -82,11 +88,7 @@ public:
 
         ++input_idx_;
         if (input_idx_ < (int)inputs_.size()) {
-            out_ch_.valid_next = 1;
-            out_ch_.data_next = inputs_[input_idx_];
-        } else {
-            out_ch_.valid_next = 0;
-            out_ch_.data_next = 0;
+            out_ch_.write(inputs_[input_idx_]);
         }
 
         did_transfer_ = false;
@@ -109,13 +111,12 @@ public:
     }
 
     void Comb() {
-        if (!in_ch_.transfer()) {
-            got_transfer_ = false;
+        got_transfer_ = in_ch_.can_read();
+        if (got_transfer_) {
+            sampled_data_ = in_ch_.read();
+        } else {
             return;
         }
-
-        got_transfer_ = true;
-        sampled_data_ = in_ch_.snapshot().data;
     }
 
     void Seq() {
@@ -177,7 +178,7 @@ int main(int argc, char** argv) {
 
     sink.SetReady(true);
     dut.Reset();
-    source.Prime();
+    source.Reset();
 
     const int MAX_CYCLES = 2000;
     for (int cycle = 0; cycle < MAX_CYCLES && !sink.Done(); ++cycle) {
