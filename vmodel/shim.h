@@ -25,7 +25,7 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
 
     bool can_read() const override { return valid; }
     Req read() override { 
-        valid = false;
+        valid_next = false;
         ready = true;
         return data;
     }

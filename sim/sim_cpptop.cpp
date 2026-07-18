@@ -33,8 +33,8 @@ public:
     void Comb() {
         // Drive DUT input ports from source channel.
         bool can_read = in_ch_.can_read();
+        top_->i_valid = can_read;
         if (can_read) {
-            top_->i_valid = can_read;
             top_->i_data = in_ch_.peek();
         }
 
