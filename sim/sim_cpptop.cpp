@@ -71,8 +71,8 @@ int main(int argc, char** argv) {
     const std::vector<uint8_t> expected = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 1, 2, 2};
 
     vmodel::SimGraph graph;
-    Channel& source_to_dut = graph.CreateChannel<Channel>();
-    Channel& dut_to_sink = graph.CreateChannel<Channel>();
+    Channel& source_to_dut = graph.CreateChannel<Channel>("source_to_dut");
+    Channel& dut_to_sink = graph.CreateChannel<Channel>("dut_to_sink");
 
     DUT dut(argc, argv, source_to_dut, dut_to_sink);
     Source<uint8_t> source(source_to_dut, inputs);

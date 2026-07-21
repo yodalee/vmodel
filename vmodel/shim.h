@@ -4,12 +4,16 @@
 
 #include <cassert>
 #include <cstdint>
+#include <string>
 
 namespace vmodel {
 
 // Simple valid/ready handshake container.
 template <typename Req>
 struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+    explicit ValidReady(std::string name = {})
+        : name_(std::move(name)) {}
+
     bool valid = false;
     bool valid_next = false;
     bool ready = false;
@@ -38,11 +42,18 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
 
     void setUpstream(IModule* m) override { upstream_ = m; }
     void setDownstream(IModule* m) override { downstream_ = m; }
+    const std::string& name() const override { return name_; }
 
     IModule* upstream() const override { return upstream_; }
     IModule* downstream() const override { return downstream_; }
 
 private:
+    const std::string& ChannelLabel() const {
+        static const std::string unnamed = "<unnamed>";
+        return name_.empty() ? unnamed : name_;
+    }
+
+    std::string name_;
     IModule* upstream_ = nullptr;
     IModule* downstream_ = nullptr;
 };
