@@ -4,7 +4,9 @@
 
 #include <cassert>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace vmodel {
 
@@ -40,9 +42,14 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
         data = data_next;
     }
 
-    void setUpstream(IModule* m) override { upstream_ = m; }
-    void setDownstream(IModule* m) override { downstream_ = m; }
     const std::string& name() const override { return name_; }
+
+    void setUpstream(IModule* m) override {
+        upstream_ = m;
+    }
+    void setDownstream(IModule* m) override {
+        downstream_ = m;
+    }
 
     IModule* upstream() const override { return upstream_; }
     IModule* downstream() const override { return downstream_; }
@@ -107,7 +114,7 @@ public:
     explicit ValidReadyOut(ValidReady<Req>& vr)
         : vr_(vr) {}
 
-    bool can_read() override {
+    bool can_read() const override {
         return vr_.can_read();
     }
 

@@ -7,6 +7,7 @@
 #include <cassert>
 #include <memory>
 #include <queue>
+#include <stdexcept>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
@@ -56,6 +57,14 @@ public:
     void Connect(IChannel& channel, IModule* upstream, IModule* downstream) {
         assert(upstream != nullptr);
         assert(downstream != nullptr);
+        if (channel.upstream() != nullptr) {
+            throw std::runtime_error("Channel '" + channel.name() +
+                                     "' already has an upstream module connected");
+        }
+        if (channel.downstream() != nullptr) {
+            throw std::runtime_error("Channel '" + channel.name() +
+                                     "' already has a downstream module connected");
+        }
         channel.setUpstream(upstream);
         channel.setDownstream(downstream);
         RegisterChannel(&channel);
