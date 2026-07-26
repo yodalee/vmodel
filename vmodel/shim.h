@@ -18,7 +18,7 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
 
     bool valid = false;
     bool valid_next = false;
-    bool ready = false;
+    bool ready = true;
     Req data{};
     Req data_next{};
 
