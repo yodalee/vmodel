@@ -86,6 +86,11 @@ target_include_directories(sim_testbench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(sim_testbench PRIVATE -Wall -Wno-sign-compare)
 target_link_libraries(sim_testbench PRIVATE verilated_tb_top z)
 
+add_executable(sim_cppsplit sim/sim_cppsplit.cpp)
+target_include_directories(sim_cppsplit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_options(sim_cppsplit PRIVATE -Wall -Wno-sign-compare)
+target_link_libraries(sim_cppsplit PRIVATE verilated_plus1 verilated_foreach verilated_repeat z)
+
 add_executable(test_vint ${VINT_TEST_SRCS})
 target_include_directories(test_vint PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(test_vint PRIVATE -Wall)
@@ -102,5 +107,5 @@ add_test(NAME ShimTests COMMAND test_shim)
 
 # Build all requested binaries with the default target
 add_custom_target(all_bins ALL
-    DEPENDS sim_cpptop sim_testbench test_vint test_shim
+    DEPENDS sim_cpptop sim_testbench sim_cppsplit test_vint test_shim
 )
