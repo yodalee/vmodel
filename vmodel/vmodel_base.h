@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace vmodel {
 
 // Common interface for all simulation modules.
@@ -14,6 +16,7 @@ class IChannel {
 public:
     virtual ~IChannel() = default;
     virtual void Seq() = 0;
+    virtual const std::string& name() const = 0;
     virtual void setUpstream(IModule* m) = 0;
     virtual void setDownstream(IModule* m) = 0;
     virtual IModule* upstream() const = 0;

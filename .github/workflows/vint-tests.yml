@@ -23,7 +23,7 @@ jobs:
         run: cmake -S . -B build -G Ninja
 
       - name: Build CI targets
-        run: cmake --build build --target sim_cpptop sim_testbench test_vint
+        run: cmake --build build --target sim_cpptop sim_testbench test_vint test_shim
 
       - name: Run sim_cpptop
         run: ./build/sim_cpptop
@@ -33,3 +33,6 @@ jobs:
 
       - name: Run vint tests
         run: ctest --test-dir build --output-on-failure -R VintTests
+
+      - name: Run shim tests
+        run: ctest --test-dir build --output-on-failure -R ShimTests
