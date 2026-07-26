@@ -26,7 +26,7 @@ public:
         top_->clk = 0;
         top_->i_valid = 0;
         top_->i_data = 0;
-        top_->o_ready = 0;
+        top_->o_ready = 1;
         top_.Reset();
     }
 
