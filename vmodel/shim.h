@@ -124,11 +124,6 @@ public:
         v_.write(d);
     }
 
-    void drive(const Valid<Req>& v) const {
-        v_.valid_next = v.valid;
-        v_.data_next = v.data;
-    }
-
 private:
     Valid<Req>& v_;
 };
@@ -146,10 +141,6 @@ public:
 
     void write() const {
         v_.write();
-    }
-
-    void drive(const Valid<>& v) const {
-        v_.valid_next = v.valid;
     }
 
 private:
@@ -274,27 +265,6 @@ public:
         vr_.write(d);
     }
 
-    void drive(const ValidReady<Req>& v) const {
-        vr_.valid_next = v.valid;
-        vr_.data_next = v.data;
-    }
-
-    bool ready() const {
-        return vr_.ready;
-    }
-
-    ValidReady<Req> snapshot() const {
-        ValidReady<Req> s;
-        s.valid = vr_.valid;
-        s.ready = vr_.ready;
-        s.data = vr_.data;
-        return s;
-    }
-
-    bool transfer() const {
-        return vr_.valid && vr_.ready;
-    }
-
 private:
     ValidReady<Req>& vr_;
 };
@@ -317,22 +287,6 @@ public:
 
     Req peek() const override {
         return vr_.peek();
-    }
-
-    ValidReady<Req> sample() const {
-        ValidReady<Req> s;
-        s.valid = vr_.valid;
-        s.ready = vr_.ready;
-        s.data = vr_.data;
-        return s;
-    }
-
-    void set_ready(bool r) const {
-        vr_.ready = r;
-    }
-
-    bool transfer() const {
-        return vr_.valid && vr_.ready;
     }
 
 private:
