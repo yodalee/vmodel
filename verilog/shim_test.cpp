@@ -20,6 +20,81 @@ TEST(ShimTest, ValidReadyCarriesName) {
     EXPECT_EQ(channel.name(), "debug_channel");
 }
 
+TEST(ShimTest, ValidCarriesName) {
+    vmodel::Valid<int> channel("valid_channel");
+
+    EXPECT_EQ(channel.name(), "valid_channel");
+}
+
+TEST(ShimTest, ValidPulseCarriesName) {
+    vmodel::Valid<> channel("valid_pulse");
+
+    EXPECT_EQ(channel.name(), "valid_pulse");
+}
+
+TEST(ShimTest, ValidTypedTransfersData) {
+    vmodel::Valid<int> channel;
+    vmodel::ValidIn<int> in(channel);
+    vmodel::ValidOut<int> out(channel);
+
+    EXPECT_TRUE(in.can_write());
+    in.write(42);
+    channel.Seq();
+
+    EXPECT_TRUE(out.can_read());
+    EXPECT_EQ(out.peek(), 42);
+    EXPECT_EQ(out.read(), 42);
+    channel.Seq();
+
+    EXPECT_FALSE(out.can_read());
+}
+
+TEST(ShimTest, ValidPulseTransfersEvent) {
+    vmodel::Valid<> channel;
+    vmodel::ValidIn<> in(channel);
+    vmodel::ValidOut<> out(channel);
+
+    EXPECT_TRUE(in.can_write());
+    in.write();
+    channel.Seq();
+
+    EXPECT_TRUE(out.can_read());
+    out.read();
+    channel.Seq();
+
+    EXPECT_FALSE(out.can_read());
+}
+
+TEST(ShimTest, SimGraphConnectsValid) {
+    vmodel::SimGraph graph;
+    auto& channel = graph.CreateChannel<vmodel::Valid<int>>("valid_channel");
+
+    DummyModule upstream;
+    DummyModule downstream;
+
+    graph.AddModule(&upstream);
+    graph.AddModule(&downstream);
+    graph.Connect(channel, &upstream, &downstream);
+
+    EXPECT_EQ(channel.upstream(), &upstream);
+    EXPECT_EQ(channel.downstream(), &downstream);
+}
+
+TEST(ShimTest, SimGraphConnectsValidPulse) {
+    vmodel::SimGraph graph;
+    auto& channel = graph.CreateChannel<vmodel::Valid<>>("valid_pulse");
+
+    DummyModule upstream;
+    DummyModule downstream;
+
+    graph.AddModule(&upstream);
+    graph.AddModule(&downstream);
+    graph.Connect(channel, &upstream, &downstream);
+
+    EXPECT_EQ(channel.upstream(), &upstream);
+    EXPECT_EQ(channel.downstream(), &downstream);
+}
+
 TEST(ShimTest, SimGraphRejectsSecondWriter) {
     vmodel::SimGraph graph;
     auto& channel = graph.CreateChannel<vmodel::ValidReady<int>>("debug_channel");

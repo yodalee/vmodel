@@ -10,6 +10,199 @@
 
 namespace vmodel {
 
+template <typename Req = void>
+struct Valid;
+
+template <typename Req = void>
+class ValidIn;
+
+template <typename Req = void>
+class ValidOut;
+
+// Simple valid-only container.
+template <typename Req>
+struct Valid : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+    explicit Valid(std::string name = {})
+        : name_(std::move(name)) {}
+
+    bool valid = false;
+    bool valid_next = false;
+    Req data{};
+    Req data_next{};
+
+    bool can_write() const override { return true; }
+    void write(Req d) override {
+        valid_next = true;
+        data_next = d;
+    }
+
+    bool can_read() const override { return valid; }
+    Req read() override {
+        valid_next = false;
+        return data;
+    }
+    Req peek() const override { return data; }
+
+    void Seq() override {
+        valid = valid_next;
+        data = data_next;
+    }
+
+    const std::string& name() const override { return name_; }
+
+    void setUpstream(IModule* m) override {
+        upstream_ = m;
+    }
+    void setDownstream(IModule* m) override {
+        downstream_ = m;
+    }
+
+    IModule* upstream() const override { return upstream_; }
+    IModule* downstream() const override { return downstream_; }
+
+private:
+    std::string name_;
+    IModule* upstream_ = nullptr;
+    IModule* downstream_ = nullptr;
+};
+
+// Valid-only pulse container with no payload.
+template <>
+struct Valid<void> : public IChannel {
+    explicit Valid(std::string name = {})
+        : name_(std::move(name)) {}
+
+    bool valid = false;
+    bool valid_next = false;
+
+    bool can_write() const { return true; }
+    void write() {
+        valid_next = true;
+    }
+
+    bool can_read() const { return valid; }
+    void read() {
+        valid_next = false;
+    }
+    void peek() const {}
+
+    void Seq() override {
+        valid = valid_next;
+    }
+
+    const std::string& name() const override { return name_; }
+
+    void setUpstream(IModule* m) override {
+        upstream_ = m;
+    }
+    void setDownstream(IModule* m) override {
+        downstream_ = m;
+    }
+
+    IModule* upstream() const override { return upstream_; }
+    IModule* downstream() const override { return downstream_; }
+
+private:
+    std::string name_;
+    IModule* upstream_ = nullptr;
+    IModule* downstream_ = nullptr;
+};
+
+// Host -> DUT valid-only interface wrapper.
+// Host drives valid/data.
+template <typename Req>
+class ValidIn : public IChannelWrite<Req> {
+public:
+    explicit ValidIn(Valid<Req>& v)
+        : v_(v) {}
+
+    bool can_write() const override {
+        return v_.can_write();
+    }
+
+    void write(Req d) override {
+        v_.write(d);
+    }
+
+    void drive(const Valid<Req>& v) const {
+        v_.valid_next = v.valid;
+        v_.data_next = v.data;
+    }
+
+private:
+    Valid<Req>& v_;
+};
+
+// Host -> DUT valid-only pulse wrapper with no payload.
+template <>
+class ValidIn<void> {
+public:
+    explicit ValidIn(Valid<>& v)
+        : v_(v) {}
+
+    bool can_write() const {
+        return v_.can_write();
+    }
+
+    void write() const {
+        v_.write();
+    }
+
+    void drive(const Valid<>& v) const {
+        v_.valid_next = v.valid;
+    }
+
+private:
+    Valid<>& v_;
+};
+
+// DUT -> Host valid-only interface wrapper.
+// Host reads valid/data.
+template <typename Req>
+class ValidOut : public IChannelRead<Req> {
+public:
+    explicit ValidOut(Valid<Req>& v)
+        : v_(v) {}
+
+    bool can_read() const override {
+        return v_.can_read();
+    }
+
+    Req read() override {
+        return v_.read();
+    }
+
+    Req peek() const override {
+        return v_.peek();
+    }
+
+private:
+    Valid<Req>& v_;
+};
+
+// DUT -> Host valid-only pulse wrapper with no payload.
+template <>
+class ValidOut<void> {
+public:
+    explicit ValidOut(Valid<>& v)
+        : v_(v) {}
+
+    bool can_read() const {
+        return v_.can_read();
+    }
+
+    void read() const {
+        v_.read();
+    }
+
+    void peek() const {
+        v_.peek();
+    }
+
+private:
+    Valid<>& v_;
+};
+
 // Simple valid/ready handshake container.
 template <typename Req>
 struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
