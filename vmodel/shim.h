@@ -194,6 +194,15 @@ private:
     Valid<>& v_;
 };
 
+template <typename Req = void>
+struct ValidReady;
+
+template <typename Req = void>
+class ValidReadyIn;
+
+template <typename Req = void>
+class ValidReadyOut;
+
 // Simple valid/ready handshake container.
 template <typename Req>
 struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
@@ -249,6 +258,51 @@ private:
     IModule* downstream_ = nullptr;
 };
 
+// Valid/ready pulse container with no payload.
+template <>
+struct ValidReady<void> : public IChannel {
+    explicit ValidReady(std::string name = {})
+        : name_(std::move(name)) {}
+
+    bool valid = false;
+    bool valid_next = false;
+    bool ready = true;
+
+    bool can_write() const { return ready; }
+    void write() {
+        valid_next = true;
+        ready = false;
+    }
+
+    bool can_read() const { return valid; }
+    void read() {
+        valid_next = false;
+        ready = true;
+    }
+    void peek() const {}
+
+    void Seq() override {
+        valid = valid_next;
+    }
+
+    const std::string& name() const override { return name_; }
+
+    void setUpstream(IModule* m) override {
+        upstream_ = m;
+    }
+    void setDownstream(IModule* m) override {
+        downstream_ = m;
+    }
+
+    IModule* upstream() const override { return upstream_; }
+    IModule* downstream() const override { return downstream_; }
+
+private:
+    std::string name_;
+    IModule* upstream_ = nullptr;
+    IModule* downstream_ = nullptr;
+};
+
 // Host -> DUT interface wrapper.
 // Host drives valid/data and reads ready.
 template <typename Req>
@@ -267,6 +321,25 @@ public:
 
 private:
     ValidReady<Req>& vr_;
+};
+
+// Host -> DUT valid/ready pulse wrapper with no payload.
+template <>
+class ValidReadyIn<void> {
+public:
+    explicit ValidReadyIn(ValidReady<>& vr)
+        : vr_(vr) {}
+
+    bool can_write() const {
+        return vr_.can_write();
+    }
+
+    void write() const {
+        vr_.write();
+    }
+
+private:
+    ValidReady<>& vr_;
 };
 
 // DUT -> Host interface wrapper.
@@ -291,6 +364,29 @@ public:
 
 private:
     ValidReady<Req>& vr_;
+};
+
+// DUT -> Host valid/ready pulse wrapper with no payload.
+template <>
+class ValidReadyOut<void> {
+public:
+    explicit ValidReadyOut(ValidReady<>& vr)
+        : vr_(vr) {}
+
+    bool can_read() const {
+        return vr_.can_read();
+    }
+
+    void read() const {
+        vr_.read();
+    }
+
+    void peek() const {
+        vr_.peek();
+    }
+
+private:
+    ValidReady<>& vr_;
 };
 
 } // namespace vmodel
