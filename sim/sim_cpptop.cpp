@@ -22,7 +22,7 @@ public:
           in_ch_(in_ch),
           out_ch_(out_ch) {}
 
-    void Reset() {
+    void Reset() override {
         top_->clk = 0;
         top_->i_valid = 0;
         top_->i_data = 0;

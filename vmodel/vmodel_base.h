@@ -8,6 +8,7 @@ namespace vmodel {
 class IModule {
 public:
     virtual ~IModule() = default;
+    virtual void Reset() {}
     virtual void Comb() = 0;
     virtual void Seq() = 0;
 };

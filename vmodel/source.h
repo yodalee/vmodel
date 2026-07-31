@@ -10,7 +10,7 @@ public:
     Source(vmodel::IChannelWrite<T>& out_ch, const std::vector<T>& inputs)
         : out_ch_(out_ch), inputs_(inputs) {}
 
-    void Reset() {
+    void Reset() override {
         if (inputs_.empty()) {
             return;
         }

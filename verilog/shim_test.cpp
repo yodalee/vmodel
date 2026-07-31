@@ -10,9 +10,17 @@ namespace {
 
 class DummyModule : public vmodel::IModule {
 public:
+    void Reset() override {}
     void Comb() override {}
     void Seq() override {}
 };
+
+TEST(ShimTest, IModuleResetIsCallableThroughInterface) {
+    DummyModule module;
+    vmodel::IModule& iface = module;
+
+    iface.Reset();
+}
 
 TEST(ShimTest, ValidReadyCarriesName) {
     vmodel::ValidReady<int> channel("debug_channel");

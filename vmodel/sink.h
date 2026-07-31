@@ -12,6 +12,8 @@ public:
     Sink(vmodel::IChannelRead<T>& in_ch, const std::vector<T>& expected)
         : in_ch_(in_ch), expected_(expected) {}
 
+    void Reset() override {}
+
     void Comb() override {
         got_transfer_ = in_ch_.CanRead();
         if (got_transfer_) {
