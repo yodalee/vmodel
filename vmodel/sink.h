@@ -13,9 +13,9 @@ public:
         : in_ch_(in_ch), expected_(expected) {}
 
     void Comb() override {
-        got_transfer_ = in_ch_.can_read();
+        got_transfer_ = in_ch_.CanRead();
         if (got_transfer_) {
-            sampled_data_ = in_ch_.read();
+            sampled_data_ = in_ch_.Read();
         }
     }
 

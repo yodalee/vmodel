@@ -32,26 +32,26 @@ public:
 
     void Comb() override {
         // Drive DUT input ports from source channel.
-        bool can_read = in_ch_.can_read();
+        bool can_read = in_ch_.CanRead();
         top_->i_valid = can_read;
         if (can_read) {
-            top_->i_data = in_ch_.peek();
+            top_->i_data = in_ch_.Peek();
         }
 
         // Drive the DUT output ports from sink channel
-        bool can_write = out_ch_.can_write();
+        bool can_write = out_ch_.CanWrite();
         top_->o_ready = can_write;
 
         top_.Comb();
 
         // If input port has done a transaction, read the data.
         if (top_->i_ready && can_read) {
-            in_ch_.read();
+            in_ch_.Read();
         }
 
         // If output port has done a transaction, write the data
         if (top_->o_valid && can_write) {
-            out_ch_.write(top_->o_data);
+            out_ch_.Write(top_->o_data);
         }
     }
 

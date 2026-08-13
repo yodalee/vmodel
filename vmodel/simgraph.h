@@ -65,8 +65,8 @@ public:
             throw std::runtime_error("Channel '" + channel.name() +
                                      "' already has a downstream module connected");
         }
-        channel.setUpstream(upstream);
-        channel.setDownstream(downstream);
+        channel.set_upstream(upstream);
+        channel.set_downstream(downstream);
         RegisterChannel(&channel);
         compiled_ = false;
     }
