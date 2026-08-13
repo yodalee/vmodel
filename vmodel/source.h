@@ -14,11 +14,11 @@ public:
         if (inputs_.empty()) {
             return;
         }
-        out_ch_.write(inputs_[0]);
+        out_ch_.Write(inputs_[0]);
     }
 
     void Comb() override {
-        did_transfer_ = out_ch_.can_write();
+        did_transfer_ = out_ch_.CanWrite();
     }
 
     void Seq() override {
@@ -28,7 +28,7 @@ public:
 
         ++input_idx_;
         if (input_idx_ < static_cast<int>(inputs_.size())) {
-            out_ch_.write(inputs_[input_idx_]);
+            out_ch_.Write(inputs_[input_idx_]);
         }
 
         did_transfer_ = false;

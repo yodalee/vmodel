@@ -30,18 +30,18 @@ struct Valid : public IChannel, public IChannelWrite<Req>, public IChannelRead<R
     Req data{};
     Req data_next{};
 
-    bool can_write() const override { return true; }
-    void write(Req d) override {
+    bool CanWrite() const override { return true; }
+    void Write(Req d) override {
         valid_next = true;
         data_next = d;
     }
 
-    bool can_read() const override { return valid; }
-    Req read() override {
+    bool CanRead() const override { return valid; }
+    Req Read() override {
         valid_next = false;
         return data;
     }
-    Req peek() const override { return data; }
+    Req Peek() const override { return data; }
 
     void Seq() override {
         valid = valid_next;
@@ -50,10 +50,10 @@ struct Valid : public IChannel, public IChannelWrite<Req>, public IChannelRead<R
 
     const std::string& name() const override { return name_; }
 
-    void setUpstream(IModule* m) override {
+    void set_upstream(IModule* m) override {
         upstream_ = m;
     }
-    void setDownstream(IModule* m) override {
+    void set_downstream(IModule* m) override {
         downstream_ = m;
     }
 
@@ -75,16 +75,16 @@ struct Valid<void> : public IChannel {
     bool valid = false;
     bool valid_next = false;
 
-    bool can_write() const { return true; }
-    void write() {
+    bool CanWrite() const { return true; }
+    void Write() {
         valid_next = true;
     }
 
-    bool can_read() const { return valid; }
-    void read() {
+    bool CanRead() const { return valid; }
+    void Read() {
         valid_next = false;
     }
-    void peek() const {}
+    void Peek() const {}
 
     void Seq() override {
         valid = valid_next;
@@ -92,10 +92,10 @@ struct Valid<void> : public IChannel {
 
     const std::string& name() const override { return name_; }
 
-    void setUpstream(IModule* m) override {
+    void set_upstream(IModule* m) override {
         upstream_ = m;
     }
-    void setDownstream(IModule* m) override {
+    void set_downstream(IModule* m) override {
         downstream_ = m;
     }
 
@@ -116,12 +116,12 @@ public:
     explicit ValidIn(Valid<Req>& v)
         : v_(v) {}
 
-    bool can_write() const override {
-        return v_.can_write();
+    bool CanWrite() const override {
+        return v_.CanWrite();
     }
 
-    void write(Req d) override {
-        v_.write(d);
+    void Write(Req d) override {
+        v_.Write(d);
     }
 
 private:
@@ -135,12 +135,12 @@ public:
     explicit ValidIn(Valid<>& v)
         : v_(v) {}
 
-    bool can_write() const {
-        return v_.can_write();
+    bool CanWrite() const {
+        return v_.CanWrite();
     }
 
-    void write() const {
-        v_.write();
+    void Write() const {
+        v_.Write();
     }
 
 private:
@@ -155,16 +155,16 @@ public:
     explicit ValidOut(Valid<Req>& v)
         : v_(v) {}
 
-    bool can_read() const override {
-        return v_.can_read();
+    bool CanRead() const override {
+        return v_.CanRead();
     }
 
-    Req read() override {
-        return v_.read();
+    Req Read() override {
+        return v_.Read();
     }
 
-    Req peek() const override {
-        return v_.peek();
+    Req Peek() const override {
+        return v_.Peek();
     }
 
 private:
@@ -178,16 +178,16 @@ public:
     explicit ValidOut(Valid<>& v)
         : v_(v) {}
 
-    bool can_read() const {
-        return v_.can_read();
+    bool CanRead() const {
+        return v_.CanRead();
     }
 
-    void read() const {
-        v_.read();
+    void Read() const {
+        v_.Read();
     }
 
-    void peek() const {
-        v_.peek();
+    void Peek() const {
+        v_.Peek();
     }
 
 private:
@@ -215,20 +215,20 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
     Req data{};
     Req data_next{};
 
-    bool can_write() const override { return ready; }
-    void write(Req d) override {
+    bool CanWrite() const override { return ready; }
+    void Write(Req d) override {
         valid_next = true;
         ready = false;
         data_next = d;
     }
 
-    bool can_read() const override { return valid; }
-    Req read() override { 
+    bool CanRead() const override { return valid; }
+    Req Read() override {
         valid_next = false;
         ready = true;
         return data;
     }
-    Req peek() const override { return data; }
+    Req Peek() const override { return data; }
 
     void Seq() override {
         valid = valid_next;
@@ -237,10 +237,10 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
 
     const std::string& name() const override { return name_; }
 
-    void setUpstream(IModule* m) override {
+    void set_upstream(IModule* m) override {
         upstream_ = m;
     }
-    void setDownstream(IModule* m) override {
+    void set_downstream(IModule* m) override {
         downstream_ = m;
     }
 
@@ -268,18 +268,18 @@ struct ValidReady<void> : public IChannel {
     bool valid_next = false;
     bool ready = true;
 
-    bool can_write() const { return ready; }
-    void write() {
+    bool CanWrite() const { return ready; }
+    void Write() {
         valid_next = true;
         ready = false;
     }
 
-    bool can_read() const { return valid; }
-    void read() {
+    bool CanRead() const { return valid; }
+    void Read() {
         valid_next = false;
         ready = true;
     }
-    void peek() const {}
+    void Peek() const {}
 
     void Seq() override {
         valid = valid_next;
@@ -287,10 +287,10 @@ struct ValidReady<void> : public IChannel {
 
     const std::string& name() const override { return name_; }
 
-    void setUpstream(IModule* m) override {
+    void set_upstream(IModule* m) override {
         upstream_ = m;
     }
-    void setDownstream(IModule* m) override {
+    void set_downstream(IModule* m) override {
         downstream_ = m;
     }
 
@@ -311,12 +311,12 @@ public:
     explicit ValidReadyIn(ValidReady<Req>& vr)
         : vr_(vr) {}
 
-    bool can_write() const override {
-        return vr_.can_write();
+    bool CanWrite() const override {
+        return vr_.CanWrite();
     }
 
-    void write(Req d) override {
-        vr_.write(d);
+    void Write(Req d) override {
+        vr_.Write(d);
     }
 
 private:
@@ -330,12 +330,12 @@ public:
     explicit ValidReadyIn(ValidReady<>& vr)
         : vr_(vr) {}
 
-    bool can_write() const {
-        return vr_.can_write();
+    bool CanWrite() const {
+        return vr_.CanWrite();
     }
 
-    void write() const {
-        vr_.write();
+    void Write() const {
+        vr_.Write();
     }
 
 private:
@@ -350,16 +350,16 @@ public:
     explicit ValidReadyOut(ValidReady<Req>& vr)
         : vr_(vr) {}
 
-    bool can_read() const override {
-        return vr_.can_read();
+    bool CanRead() const override {
+        return vr_.CanRead();
     }
 
-    Req read() override {
-        return vr_.read();
+    Req Read() override {
+        return vr_.Read();
     }
 
-    Req peek() const override {
-        return vr_.peek();
+    Req Peek() const override {
+        return vr_.Peek();
     }
 
 private:
@@ -373,16 +373,16 @@ public:
     explicit ValidReadyOut(ValidReady<>& vr)
         : vr_(vr) {}
 
-    bool can_read() const {
-        return vr_.can_read();
+    bool CanRead() const {
+        return vr_.CanRead();
     }
 
-    void read() const {
-        vr_.read();
+    void Read() const {
+        vr_.Read();
     }
 
-    void peek() const {
-        vr_.peek();
+    void Peek() const {
+        vr_.Peek();
     }
 
 private:

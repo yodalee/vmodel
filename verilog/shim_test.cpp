@@ -31,17 +31,17 @@ TEST(ShimTest, ValidReadyPulseTransfersEvent) {
     vmodel::ValidReadyIn<> in(channel);
     vmodel::ValidReadyOut<> out(channel);
 
-    EXPECT_TRUE(in.can_write());
-    in.write();
-    EXPECT_FALSE(in.can_write());
+    EXPECT_TRUE(in.CanWrite());
+    in.Write();
+    EXPECT_FALSE(in.CanWrite());
     channel.Seq();
 
-    EXPECT_TRUE(out.can_read());
-    out.read();
+    EXPECT_TRUE(out.CanRead());
+    out.Read();
     channel.Seq();
 
-    EXPECT_FALSE(out.can_read());
-    EXPECT_TRUE(in.can_write());
+    EXPECT_FALSE(out.CanRead());
+    EXPECT_TRUE(in.CanWrite());
 }
 
 TEST(ShimTest, ValidCarriesName) {
@@ -61,16 +61,16 @@ TEST(ShimTest, ValidTypedTransfersData) {
     vmodel::ValidIn<int> in(channel);
     vmodel::ValidOut<int> out(channel);
 
-    EXPECT_TRUE(in.can_write());
-    in.write(42);
+    EXPECT_TRUE(in.CanWrite());
+    in.Write(42);
     channel.Seq();
 
-    EXPECT_TRUE(out.can_read());
-    EXPECT_EQ(out.peek(), 42);
-    EXPECT_EQ(out.read(), 42);
+    EXPECT_TRUE(out.CanRead());
+    EXPECT_EQ(out.Peek(), 42);
+    EXPECT_EQ(out.Read(), 42);
     channel.Seq();
 
-    EXPECT_FALSE(out.can_read());
+    EXPECT_FALSE(out.CanRead());
 }
 
 TEST(ShimTest, ValidPulseTransfersEvent) {
@@ -78,15 +78,15 @@ TEST(ShimTest, ValidPulseTransfersEvent) {
     vmodel::ValidIn<> in(channel);
     vmodel::ValidOut<> out(channel);
 
-    EXPECT_TRUE(in.can_write());
-    in.write();
+    EXPECT_TRUE(in.CanWrite());
+    in.Write();
     channel.Seq();
 
-    EXPECT_TRUE(out.can_read());
-    out.read();
+    EXPECT_TRUE(out.CanRead());
+    out.Read();
     channel.Seq();
 
-    EXPECT_FALSE(out.can_read());
+    EXPECT_FALSE(out.CanRead());
 }
 
 TEST(ShimTest, SimGraphConnectsValid) {
