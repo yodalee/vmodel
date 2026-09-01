@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 
 namespace vmodel {
@@ -30,6 +31,7 @@ public:
     virtual ~IChannelWrite() = default;
     virtual bool CanWrite() const = 0;
     virtual void Write(Req d) = 0;
+    virtual void RegisterWriteCallback(std::function<void(Req)> callback) = 0;
 };
 
 template <>
@@ -38,6 +40,7 @@ public:
     virtual ~IChannelWrite() = default;
     virtual bool CanWrite() const = 0;
     virtual void Write() = 0;
+    virtual void RegisterWriteCallback(std::function<void()> callback) = 0;
 };
 
 template <typename Req>
@@ -47,6 +50,7 @@ public:
     virtual bool CanRead() const = 0;
     virtual Req Read() = 0;
     virtual Req Peek() const = 0;
+    virtual void RegisterReadCallback(std::function<void(Req)> callback) = 0;
 };
 
 template <>
@@ -56,6 +60,7 @@ public:
     virtual bool CanRead() const = 0;
     virtual void Read() = 0;
     virtual void Peek() const = 0;
+    virtual void RegisterReadCallback(std::function<void()> callback) = 0;
 };
 
 }; // namespace vmodel
