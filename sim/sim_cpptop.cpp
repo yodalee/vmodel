@@ -73,10 +73,12 @@ int main(int argc, char** argv) {
     vmodel::SimGraph graph;
     Channel& source_to_dut = graph.CreateChannel<Channel>("source_to_dut");
     Channel& dut_to_sink = graph.CreateChannel<Channel>("dut_to_sink");
+    vmodel::ValidReadyIn<uint8_t> source_out(source_to_dut);
+    vmodel::ValidReadyOut<uint8_t> sink_in(dut_to_sink);
 
     DUT dut(argc, argv, source_to_dut, dut_to_sink);
-    Source<uint8_t> source(source_to_dut, inputs);
-    Sink<uint8_t> sink(dut_to_sink, expected);
+    Source<uint8_t> source(source_out, inputs);
+    Sink<uint8_t> sink(sink_in, expected);
 
     graph.AddModule(&source);
     graph.AddModule(&dut);

@@ -75,12 +75,14 @@ int main(int argc, char** argv) {
     Channel& plus1_to_foreach = graph.CreateChannel<Channel>();
     Channel& foreach_to_repeat = graph.CreateChannel<Channel>();
     Channel& repeat_to_sink = graph.CreateChannel<Channel>();
+    vmodel::ValidReadyIn<uint8_t> source_out(source_to_plus1);
+    vmodel::ValidReadyOut<uint8_t> sink_in(repeat_to_sink);
 
     DUTStage<VPlus1> plus1(argc, argv, "cpp_plus1.fst", source_to_plus1, plus1_to_foreach);
     DUTStage<VForEach> foreach(argc, argv, "cpp_foreach.fst", plus1_to_foreach, foreach_to_repeat);
     DUTStage<VRepeat> repeat(argc, argv, "cpp_repeat.fst", foreach_to_repeat, repeat_to_sink);
-    Source<uint8_t> source(source_to_plus1, inputs);
-    Sink<uint8_t> sink(repeat_to_sink, expected);
+    Source<uint8_t> source(source_out, inputs);
+    Sink<uint8_t> sink(sink_in, expected);
 
     graph.AddModule(&source);
     graph.AddModule(&plus1);

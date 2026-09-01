@@ -30,23 +30,23 @@ class ValidOut;
 
 // Simple always-available signal container.
 template <typename Req>
-struct Signal : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+struct Signal : public IChannel {
     explicit Signal(std::string name = {})
         : name_(std::move(name)) {}
 
     Req data{};
     Req data_next{};
 
-    bool CanWrite() const override { return true; }
-    void Write(Req d) override {
+    bool CanWrite() const { return true; }
+    void Write(Req d) {
         data_next = d;
     }
 
-    bool CanRead() const override { return true; }
-    Req Read() override {
+    bool CanRead() const { return true; }
+    Req Read() {
         return data;
     }
-    Req Peek() const override { return data; }
+    Req Peek() const { return data; }
 
     void Seq() override {
         data = data_next;
@@ -114,7 +114,7 @@ private:
 
 // Simple valid-only container.
 template <typename Req>
-struct Valid : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+struct Valid : public IChannel {
     explicit Valid(std::string name = {})
         : name_(std::move(name)) {}
 
@@ -123,18 +123,18 @@ struct Valid : public IChannel, public IChannelWrite<Req>, public IChannelRead<R
     Req data{};
     Req data_next{};
 
-    bool CanWrite() const override { return true; }
-    void Write(Req d) override {
+    bool CanWrite() const { return true; }
+    void Write(Req d) {
         valid_next = true;
         data_next = d;
     }
 
-    bool CanRead() const override { return valid; }
-    Req Read() override {
+    bool CanRead() const { return valid; }
+    Req Read() {
         valid_next = false;
         return data;
     }
-    Req Peek() const override { return data; }
+    Req Peek() const { return data; }
 
     void Seq() override {
         valid = valid_next;
@@ -298,7 +298,7 @@ class ValidReadyOut;
 
 // Simple valid/ready handshake container.
 template <typename Req>
-struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+struct ValidReady : public IChannel {
     explicit ValidReady(std::string name = {})
         : name_(std::move(name)) {}
 
@@ -308,20 +308,20 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
     Req data{};
     Req data_next{};
 
-    bool CanWrite() const override { return ready; }
-    void Write(Req d) override {
+    bool CanWrite() const { return ready; }
+    void Write(Req d) {
         valid_next = true;
         ready = false;
         data_next = d;
     }
 
-    bool CanRead() const override { return valid; }
-    Req Read() override {
+    bool CanRead() const { return valid; }
+    Req Read() {
         valid_next = false;
         ready = true;
         return data;
     }
-    Req Peek() const override { return data; }
+    Req Peek() const { return data; }
 
     void Seq() override {
         valid = valid_next;
@@ -353,7 +353,7 @@ private:
 
 // Valid/ready pulse container with no payload.
 template <>
-struct ValidReady<void> : public IChannel, public IChannelWrite<void>, public IChannelRead<void> {
+struct ValidReady<void> : public IChannel {
     explicit ValidReady(std::string name = {})
         : name_(std::move(name)) {}
 
@@ -361,18 +361,18 @@ struct ValidReady<void> : public IChannel, public IChannelWrite<void>, public IC
     bool valid_next = false;
     bool ready = true;
 
-    bool CanWrite() const override { return ready; }
-    void Write() override {
+    bool CanWrite() const { return ready; }
+    void Write() {
         valid_next = true;
         ready = false;
     }
 
-    bool CanRead() const override { return valid; }
-    void Read() override {
+    bool CanRead() const { return valid; }
+    void Read() {
         valid_next = false;
         ready = true;
     }
-    void Peek() const override {}
+    void Peek() const {}
 
     void Seq() override {
         valid = valid_next;
