@@ -10,9 +10,17 @@ namespace {
 
 class DummyModule : public vmodel::IModule {
 public:
+    void Reset() override {}
     void Comb() override {}
     void Seq() override {}
 };
+
+TEST(ShimTest, IModuleResetIsCallableThroughInterface) {
+    DummyModule module;
+    vmodel::IModule& iface = module;
+
+    iface.Reset();
+}
 
 TEST(ShimTest, ValidReadyCarriesName) {
     vmodel::ValidReady<int> channel("debug_channel");
@@ -89,9 +97,48 @@ TEST(ShimTest, ValidPulseTransfersEvent) {
     EXPECT_FALSE(out.CanRead());
 }
 
+TEST(ShimTest, SignalCarriesName) {
+    vmodel::Signal<int> channel("signal_channel");
+
+    EXPECT_EQ(channel.name(), "signal_channel");
+}
+
+TEST(ShimTest, SignalTransfersData) {
+    vmodel::Signal<int> channel;
+    vmodel::SignalIn<int> in(channel);
+    vmodel::SignalOut<int> out(channel);
+
+    EXPECT_TRUE(in.CanWrite());
+    in.Write(11);
+    channel.Seq();
+
+    EXPECT_TRUE(out.CanRead());
+    EXPECT_EQ(out.Peek(), 11);
+    EXPECT_EQ(out.Read(), 11);
+
+    in.Write(33);
+    channel.Seq();
+    EXPECT_EQ(out.Peek(), 33);
+}
+
 TEST(ShimTest, SimGraphConnectsValid) {
     vmodel::SimGraph graph;
     auto& channel = graph.CreateChannel<vmodel::Valid<int>>("valid_channel");
+
+    DummyModule upstream;
+    DummyModule downstream;
+
+    graph.AddModule(&upstream);
+    graph.AddModule(&downstream);
+    graph.Connect(channel, &upstream, &downstream);
+
+    EXPECT_EQ(channel.upstream(), &upstream);
+    EXPECT_EQ(channel.downstream(), &downstream);
+}
+
+TEST(ShimTest, SimGraphConnectsSignal) {
+    vmodel::SimGraph graph;
+    auto& channel = graph.CreateChannel<vmodel::Signal<int>>("signal_channel");
 
     DummyModule upstream;
     DummyModule downstream;

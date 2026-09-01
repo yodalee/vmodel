@@ -8,6 +8,7 @@ namespace vmodel {
 class IModule {
 public:
     virtual ~IModule() = default;
+    virtual void Reset() {}
     virtual void Comb() = 0;
     virtual void Seq() = 0;
 };
@@ -31,6 +32,14 @@ public:
     virtual void Write(Req d) = 0;
 };
 
+template <>
+class IChannelWrite<void> {
+public:
+    virtual ~IChannelWrite() = default;
+    virtual bool CanWrite() const = 0;
+    virtual void Write() = 0;
+};
+
 template <typename Req>
 class IChannelRead {
 public:
@@ -38,6 +47,15 @@ public:
     virtual bool CanRead() const = 0;
     virtual Req Read() = 0;
     virtual Req Peek() const = 0;
+};
+
+template <>
+class IChannelRead<void> {
+public:
+    virtual ~IChannelRead() = default;
+    virtual bool CanRead() const = 0;
+    virtual void Read() = 0;
+    virtual void Peek() const = 0;
 };
 
 }; // namespace vmodel

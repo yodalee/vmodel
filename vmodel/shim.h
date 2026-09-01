@@ -10,6 +10,15 @@
 
 namespace vmodel {
 
+template <typename Req>
+struct Signal;
+
+template <typename Req>
+class SignalIn;
+
+template <typename Req>
+class SignalOut;
+
 template <typename Req = void>
 struct Valid;
 
@@ -18,6 +27,90 @@ class ValidIn;
 
 template <typename Req = void>
 class ValidOut;
+
+// Simple always-available signal container.
+template <typename Req>
+struct Signal : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+    explicit Signal(std::string name = {})
+        : name_(std::move(name)) {}
+
+    Req data{};
+    Req data_next{};
+
+    bool CanWrite() const override { return true; }
+    void Write(Req d) override {
+        data_next = d;
+    }
+
+    bool CanRead() const override { return true; }
+    Req Read() override {
+        return data;
+    }
+    Req Peek() const override { return data; }
+
+    void Seq() override {
+        data = data_next;
+    }
+
+    const std::string& name() const override { return name_; }
+
+    void set_upstream(IModule* m) override {
+        upstream_ = m;
+    }
+    void set_downstream(IModule* m) override {
+        downstream_ = m;
+    }
+
+    IModule* upstream() const override { return upstream_; }
+    IModule* downstream() const override { return downstream_; }
+
+private:
+    std::string name_;
+    IModule* upstream_ = nullptr;
+    IModule* downstream_ = nullptr;
+};
+
+// Host -> DUT signal interface wrapper.
+template <typename Req>
+class SignalIn : public IChannelWrite<Req> {
+public:
+    explicit SignalIn(Signal<Req>& s)
+        : s_(s) {}
+
+    bool CanWrite() const override {
+        return s_.CanWrite();
+    }
+
+    void Write(Req d) override {
+        s_.Write(d);
+    }
+
+private:
+    Signal<Req>& s_;
+};
+
+// DUT -> Host signal interface wrapper.
+template <typename Req>
+class SignalOut : public IChannelRead<Req> {
+public:
+    explicit SignalOut(Signal<Req>& s)
+        : s_(s) {}
+
+    bool CanRead() const override {
+        return s_.CanRead();
+    }
+
+    Req Read() override {
+        return s_.Read();
+    }
+
+    Req Peek() const override {
+        return s_.Peek();
+    }
+
+private:
+    Signal<Req>& s_;
+};
 
 // Simple valid-only container.
 template <typename Req>
@@ -130,16 +223,16 @@ private:
 
 // Host -> DUT valid-only pulse wrapper with no payload.
 template <>
-class ValidIn<void> {
+class ValidIn<void> : public IChannelWrite<void> {
 public:
     explicit ValidIn(Valid<>& v)
         : v_(v) {}
 
-    bool CanWrite() const {
+    bool CanWrite() const override {
         return v_.CanWrite();
     }
 
-    void Write() const {
+    void Write() override {
         v_.Write();
     }
 
@@ -173,20 +266,20 @@ private:
 
 // DUT -> Host valid-only pulse wrapper with no payload.
 template <>
-class ValidOut<void> {
+class ValidOut<void> : public IChannelRead<void> {
 public:
     explicit ValidOut(Valid<>& v)
         : v_(v) {}
 
-    bool CanRead() const {
+    bool CanRead() const override {
         return v_.CanRead();
     }
 
-    void Read() const {
+    void Read() override {
         v_.Read();
     }
 
-    void Peek() const {
+    void Peek() const override {
         v_.Peek();
     }
 
@@ -260,7 +353,7 @@ private:
 
 // Valid/ready pulse container with no payload.
 template <>
-struct ValidReady<void> : public IChannel {
+struct ValidReady<void> : public IChannel, public IChannelWrite<void>, public IChannelRead<void> {
     explicit ValidReady(std::string name = {})
         : name_(std::move(name)) {}
 
@@ -268,18 +361,18 @@ struct ValidReady<void> : public IChannel {
     bool valid_next = false;
     bool ready = true;
 
-    bool CanWrite() const { return ready; }
-    void Write() {
+    bool CanWrite() const override { return ready; }
+    void Write() override {
         valid_next = true;
         ready = false;
     }
 
-    bool CanRead() const { return valid; }
-    void Read() {
+    bool CanRead() const override { return valid; }
+    void Read() override {
         valid_next = false;
         ready = true;
     }
-    void Peek() const {}
+    void Peek() const override {}
 
     void Seq() override {
         valid = valid_next;
