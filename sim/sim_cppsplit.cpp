@@ -65,6 +65,34 @@ private:
     Channel& out_ch_;
 };
 
+class CppForeach : public vmodel::IModule {
+public:
+    CppForeach(Channel& in_ch, Channel& out_ch)
+        : in_ch_(in_ch), out_ch_(out_ch) {
+        in_ch_.RegisterReadCallback([&](uint8_t n) {
+            if (n != 0) { cur_ = 1; end_ = n; }
+        });
+    }
+    CppForeach(int, char**, const char*, Channel& in_ch, Channel& out_ch)
+        : CppForeach(in_ch, out_ch) {}
+
+    void Comb() override {
+        if (cur_ == 0 && in_ch_.CanRead()) in_ch_.Read();
+        if (cur_ != 0 && out_ch_.CanWrite()) {
+            out_ch_.Write(cur_);
+            cur_ = cur_ == end_ ? 0 : static_cast<uint8_t>(cur_ + 1);
+        }
+    }
+
+    void Seq() override {}
+
+private:
+    vmodel::ValidReadyOut<uint8_t> in_ch_;
+    vmodel::ValidReadyIn<uint8_t> out_ch_;
+    uint8_t cur_ = 0;
+    uint8_t end_ = 0;
+};
+
 int main(int argc, char** argv) {
     // Input stream and expected output sequence.
     const std::vector<uint8_t> inputs   = {3, 1};
@@ -80,6 +108,7 @@ int main(int argc, char** argv) {
 
     DUTStage<VPlus1> plus1(argc, argv, "cpp_plus1.fst", source_to_plus1, plus1_to_foreach);
     DUTStage<VForEach> foreach(argc, argv, "cpp_foreach.fst", plus1_to_foreach, foreach_to_repeat);
+    // CppForeach foreach(argc, argv, "cpp_foreach.fst", plus1_to_foreach, foreach_to_repeat);
     DUTStage<VRepeat> repeat(argc, argv, "cpp_repeat.fst", foreach_to_repeat, repeat_to_sink);
     Source<uint8_t> source(source_out, inputs);
     Sink<uint8_t> sink(sink_in, expected);
