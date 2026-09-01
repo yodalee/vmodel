@@ -130,16 +130,16 @@ private:
 
 // Host -> DUT valid-only pulse wrapper with no payload.
 template <>
-class ValidIn<void> {
+class ValidIn<void> : public IChannelWrite<void> {
 public:
     explicit ValidIn(Valid<>& v)
         : v_(v) {}
 
-    bool CanWrite() const {
+    bool CanWrite() const override {
         return v_.CanWrite();
     }
 
-    void Write() const {
+    void Write() override {
         v_.Write();
     }
 
@@ -173,20 +173,20 @@ private:
 
 // DUT -> Host valid-only pulse wrapper with no payload.
 template <>
-class ValidOut<void> {
+class ValidOut<void> : public IChannelRead<void> {
 public:
     explicit ValidOut(Valid<>& v)
         : v_(v) {}
 
-    bool CanRead() const {
+    bool CanRead() const override {
         return v_.CanRead();
     }
 
-    void Read() const {
+    void Read() override {
         v_.Read();
     }
 
-    void Peek() const {
+    void Peek() const override {
         v_.Peek();
     }
 
@@ -260,7 +260,7 @@ private:
 
 // Valid/ready pulse container with no payload.
 template <>
-struct ValidReady<void> : public IChannel {
+struct ValidReady<void> : public IChannel, public IChannelWrite<void>, public IChannelRead<void> {
     explicit ValidReady(std::string name = {})
         : name_(std::move(name)) {}
 
@@ -268,18 +268,18 @@ struct ValidReady<void> : public IChannel {
     bool valid_next = false;
     bool ready = true;
 
-    bool CanWrite() const { return ready; }
-    void Write() {
+    bool CanWrite() const override { return ready; }
+    void Write() override {
         valid_next = true;
         ready = false;
     }
 
-    bool CanRead() const { return valid; }
-    void Read() {
+    bool CanRead() const override { return valid; }
+    void Read() override {
         valid_next = false;
         ready = true;
     }
-    void Peek() const {}
+    void Peek() const override {}
 
     void Seq() override {
         valid = valid_next;
