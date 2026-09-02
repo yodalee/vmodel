@@ -4,9 +4,11 @@
 
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace vmodel {
 
@@ -30,23 +32,23 @@ class ValidOut;
 
 // Simple always-available signal container.
 template <typename Req>
-struct Signal : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+struct Signal : public IChannel {
     explicit Signal(std::string name = {})
         : name_(std::move(name)) {}
 
     Req data{};
     Req data_next{};
 
-    bool CanWrite() const override { return true; }
-    void Write(Req d) override {
+    bool CanWrite() const { return true; }
+    void Write(Req d) {
         data_next = d;
     }
 
-    bool CanRead() const override { return true; }
-    Req Read() override {
+    bool CanRead() const { return true; }
+    Req Read() {
         return data;
     }
-    Req Peek() const override { return data; }
+    Req Peek() const { return data; }
 
     void Seq() override {
         data = data_next;
@@ -83,10 +85,18 @@ public:
 
     void Write(Req d) override {
         s_.Write(d);
+        for (auto& callback : v_callbacks) {
+            callback(d);
+        }
+    }
+
+    void RegisterWriteCallback(std::function<void(Req)> callback) override {
+        v_callbacks.push_back(std::move(callback));
     }
 
 private:
     Signal<Req>& s_;
+    std::vector<std::function<void(Req)>> v_callbacks;
 };
 
 // DUT -> Host signal interface wrapper.
@@ -101,20 +111,29 @@ public:
     }
 
     Req Read() override {
-        return s_.Read();
+        Req data = s_.Read();
+        for (auto& callback : v_callbacks) {
+            callback(data);
+        }
+        return data;
     }
 
     Req Peek() const override {
         return s_.Peek();
     }
 
+    void RegisterReadCallback(std::function<void(Req)> callback) override {
+        v_callbacks.push_back(std::move(callback));
+    }
+
 private:
     Signal<Req>& s_;
+    std::vector<std::function<void(Req)>> v_callbacks;
 };
 
 // Simple valid-only container.
 template <typename Req>
-struct Valid : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+struct Valid : public IChannel {
     explicit Valid(std::string name = {})
         : name_(std::move(name)) {}
 
@@ -123,18 +142,18 @@ struct Valid : public IChannel, public IChannelWrite<Req>, public IChannelRead<R
     Req data{};
     Req data_next{};
 
-    bool CanWrite() const override { return true; }
-    void Write(Req d) override {
+    bool CanWrite() const { return true; }
+    void Write(Req d) {
         valid_next = true;
         data_next = d;
     }
 
-    bool CanRead() const override { return valid; }
-    Req Read() override {
+    bool CanRead() const { return valid; }
+    Req Read() {
         valid_next = false;
         return data;
     }
-    Req Peek() const override { return data; }
+    Req Peek() const { return data; }
 
     void Seq() override {
         valid = valid_next;
@@ -215,10 +234,18 @@ public:
 
     void Write(Req d) override {
         v_.Write(d);
+        for (auto& callback : v_callbacks) {
+            callback(d);
+        }
+    }
+
+    void RegisterWriteCallback(std::function<void(Req)> callback) override {
+        v_callbacks.push_back(std::move(callback));
     }
 
 private:
     Valid<Req>& v_;
+    std::vector<std::function<void(Req)>> v_callbacks;
 };
 
 // Host -> DUT valid-only pulse wrapper with no payload.
@@ -234,10 +261,18 @@ public:
 
     void Write() override {
         v_.Write();
+        for (auto& callback : v_callbacks) {
+            callback();
+        }
+    }
+
+    void RegisterWriteCallback(std::function<void()> callback) override {
+        v_callbacks.push_back(std::move(callback));
     }
 
 private:
     Valid<>& v_;
+    std::vector<std::function<void()>> v_callbacks;
 };
 
 // DUT -> Host valid-only interface wrapper.
@@ -253,15 +288,24 @@ public:
     }
 
     Req Read() override {
-        return v_.Read();
+        Req data = v_.Read();
+        for (auto& callback : v_callbacks) {
+            callback(data);
+        }
+        return data;
     }
 
     Req Peek() const override {
         return v_.Peek();
     }
 
+    void RegisterReadCallback(std::function<void(Req)> callback) override {
+        v_callbacks.push_back(std::move(callback));
+    }
+
 private:
     Valid<Req>& v_;
+    std::vector<std::function<void(Req)>> v_callbacks;
 };
 
 // DUT -> Host valid-only pulse wrapper with no payload.
@@ -277,14 +321,22 @@ public:
 
     void Read() override {
         v_.Read();
+        for (auto& callback : v_callbacks) {
+            callback();
+        }
     }
 
     void Peek() const override {
         v_.Peek();
     }
 
+    void RegisterReadCallback(std::function<void()> callback) override {
+        v_callbacks.push_back(std::move(callback));
+    }
+
 private:
     Valid<>& v_;
+    std::vector<std::function<void()>> v_callbacks;
 };
 
 template <typename Req = void>
@@ -298,7 +350,7 @@ class ValidReadyOut;
 
 // Simple valid/ready handshake container.
 template <typename Req>
-struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelRead<Req> {
+struct ValidReady : public IChannel {
     explicit ValidReady(std::string name = {})
         : name_(std::move(name)) {}
 
@@ -308,20 +360,20 @@ struct ValidReady : public IChannel, public IChannelWrite<Req>, public IChannelR
     Req data{};
     Req data_next{};
 
-    bool CanWrite() const override { return ready; }
-    void Write(Req d) override {
+    bool CanWrite() const { return ready; }
+    void Write(Req d) {
         valid_next = true;
         ready = false;
         data_next = d;
     }
 
-    bool CanRead() const override { return valid; }
-    Req Read() override {
+    bool CanRead() const { return valid; }
+    Req Read() {
         valid_next = false;
         ready = true;
         return data;
     }
-    Req Peek() const override { return data; }
+    Req Peek() const { return data; }
 
     void Seq() override {
         valid = valid_next;
@@ -353,7 +405,7 @@ private:
 
 // Valid/ready pulse container with no payload.
 template <>
-struct ValidReady<void> : public IChannel, public IChannelWrite<void>, public IChannelRead<void> {
+struct ValidReady<void> : public IChannel {
     explicit ValidReady(std::string name = {})
         : name_(std::move(name)) {}
 
@@ -361,18 +413,18 @@ struct ValidReady<void> : public IChannel, public IChannelWrite<void>, public IC
     bool valid_next = false;
     bool ready = true;
 
-    bool CanWrite() const override { return ready; }
-    void Write() override {
+    bool CanWrite() const { return ready; }
+    void Write() {
         valid_next = true;
         ready = false;
     }
 
-    bool CanRead() const override { return valid; }
-    void Read() override {
+    bool CanRead() const { return valid; }
+    void Read() {
         valid_next = false;
         ready = true;
     }
-    void Peek() const override {}
+    void Peek() const {}
 
     void Seq() override {
         valid = valid_next;
@@ -410,29 +462,45 @@ public:
 
     void Write(Req d) override {
         vr_.Write(d);
+        for (auto& callback : v_callbacks) {
+            callback(d);
+        }
+    }
+
+    void RegisterWriteCallback(std::function<void(Req)> callback) override {
+        v_callbacks.push_back(std::move(callback));
     }
 
 private:
     ValidReady<Req>& vr_;
+    std::vector<std::function<void(Req)>> v_callbacks;
 };
 
 // Host -> DUT valid/ready pulse wrapper with no payload.
 template <>
-class ValidReadyIn<void> {
+class ValidReadyIn<void> : public IChannelWrite<void> {
 public:
     explicit ValidReadyIn(ValidReady<>& vr)
         : vr_(vr) {}
 
-    bool CanWrite() const {
+    bool CanWrite() const override {
         return vr_.CanWrite();
     }
 
-    void Write() const {
+    void Write() override {
         vr_.Write();
+        for (auto& callback : v_callbacks) {
+            callback();
+        }
+    }
+
+    void RegisterWriteCallback(std::function<void()> callback) override {
+        v_callbacks.push_back(std::move(callback));
     }
 
 private:
     ValidReady<>& vr_;
+    std::vector<std::function<void()>> v_callbacks;
 };
 
 // DUT -> Host interface wrapper.
@@ -448,38 +516,55 @@ public:
     }
 
     Req Read() override {
-        return vr_.Read();
+        Req data = vr_.Read();
+        for (auto& callback : v_callbacks) {
+            callback(data);
+        }
+        return data;
     }
 
     Req Peek() const override {
         return vr_.Peek();
     }
 
+    void RegisterReadCallback(std::function<void(Req)> callback) override {
+        v_callbacks.push_back(std::move(callback));
+    }
+
 private:
     ValidReady<Req>& vr_;
+    std::vector<std::function<void(Req)>> v_callbacks;
 };
 
 // DUT -> Host valid/ready pulse wrapper with no payload.
 template <>
-class ValidReadyOut<void> {
+class ValidReadyOut<void> : public IChannelRead<void> {
 public:
     explicit ValidReadyOut(ValidReady<>& vr)
         : vr_(vr) {}
 
-    bool CanRead() const {
+    bool CanRead() const override {
         return vr_.CanRead();
     }
 
-    void Read() const {
+    void Read() override {
         vr_.Read();
+        for (auto& callback : v_callbacks) {
+            callback();
+        }
     }
 
-    void Peek() const {
+    void Peek() const override {
         vr_.Peek();
+    }
+
+    void RegisterReadCallback(std::function<void()> callback) override {
+        v_callbacks.push_back(std::move(callback));
     }
 
 private:
     ValidReady<>& vr_;
+    std::vector<std::function<void()>> v_callbacks;
 };
 
 } // namespace vmodel
