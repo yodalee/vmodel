@@ -24,6 +24,12 @@ set(SHIM_TEST_SRCS
     verilog/shim_test.cpp
 )
 
+add_library(vmodel INTERFACE)
+target_include_directories(vmodel INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(verilog INTERFACE)
+target_include_directories(verilog INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Verilated libraries
 add_library(verilated_top STATIC)
 verilate(verilated_top
@@ -77,29 +83,24 @@ verilate(verilated_repeat
 
 # C++ simulation executables
 add_executable(sim_cpptop sim/sim_cpptop.cpp)
-target_include_directories(sim_cpptop PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(sim_cpptop PRIVATE -Wall -Wno-sign-compare)
-target_link_libraries(sim_cpptop PRIVATE verilated_top z)
+target_link_libraries(sim_cpptop PRIVATE vmodel verilated_top z)
 
 add_executable(sim_testbench sim/sim_testbench.cpp)
-target_include_directories(sim_testbench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(sim_testbench PRIVATE -Wall -Wno-sign-compare)
-target_link_libraries(sim_testbench PRIVATE verilated_tb_top z)
+target_link_libraries(sim_testbench PRIVATE vmodel verilated_tb_top z)
 
 add_executable(sim_cppsplit sim/sim_cppsplit.cpp)
-target_include_directories(sim_cppsplit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(sim_cppsplit PRIVATE -Wall -Wno-sign-compare)
-target_link_libraries(sim_cppsplit PRIVATE verilated_plus1 verilated_foreach verilated_repeat z)
+target_link_libraries(sim_cppsplit PRIVATE vmodel verilated_plus1 verilated_foreach verilated_repeat z)
 
 add_executable(test_vint ${VINT_TEST_SRCS})
-target_include_directories(test_vint PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(test_vint PRIVATE -Wall)
-target_link_libraries(test_vint PRIVATE gtest gtest_main)
+target_link_libraries(test_vint PRIVATE verilog gtest gtest_main)
 
 add_executable(test_shim ${SHIM_TEST_SRCS})
-target_include_directories(test_shim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(test_shim PRIVATE -Wall)
-target_link_libraries(test_shim PRIVATE gtest gtest_main)
+target_link_libraries(test_shim PRIVATE vmodel gtest gtest_main)
 
 # Register the test with CTest
 add_test(NAME VintTests COMMAND test_vint)
