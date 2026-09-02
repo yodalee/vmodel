@@ -30,69 +30,8 @@ target_include_directories(vmodel INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 add_library(verilog INTERFACE)
 target_include_directories(verilog INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Verilated libraries
-add_library(verilated_top STATIC)
-verilate(verilated_top
-    PREFIX VTop
-    SOURCES rtl/Top.sv
-    INCLUDE_DIRS ${RTL_DIR}
-    TOP_MODULE Top
-    VERILATOR_ARGS --Wall
-    TRACE_FST
-)
+add_subdirectory(sim/validready)
 
-add_library(verilated_tb_top STATIC)
-verilate(verilated_tb_top
-    PREFIX Vtb_top
-    SOURCES tb_top.sv
-    INCLUDE_DIRS ${RTL_DIR}
-    TOP_MODULE tb_top
-    VERILATOR_ARGS --Wall --timing
-    TRACE_FST
-)
-
-add_library(verilated_plus1 STATIC)
-verilate(verilated_plus1
-    PREFIX VPlus1
-    SOURCES rtl/Plus1.sv
-    INCLUDE_DIRS ${RTL_DIR}
-    TOP_MODULE Plus1
-    VERILATOR_ARGS --Wall
-    TRACE_FST
-)
-
-add_library(verilated_foreach STATIC)
-verilate(verilated_foreach
-    PREFIX VForEach
-    SOURCES rtl/ForEach.sv
-    INCLUDE_DIRS ${RTL_DIR}
-    TOP_MODULE ForEach
-    VERILATOR_ARGS --Wall
-    TRACE_FST
-)
-
-add_library(verilated_repeat STATIC)
-verilate(verilated_repeat
-    PREFIX VRepeat
-    SOURCES rtl/Repeat.sv
-    INCLUDE_DIRS ${RTL_DIR}
-    TOP_MODULE Repeat
-    VERILATOR_ARGS --Wall
-    TRACE_FST
-)
-
-# C++ simulation executables
-add_executable(sim_cpptop sim/sim_cpptop.cpp)
-target_compile_options(sim_cpptop PRIVATE -Wall -Wno-sign-compare)
-target_link_libraries(sim_cpptop PRIVATE vmodel verilated_top z)
-
-add_executable(sim_testbench sim/sim_testbench.cpp)
-target_compile_options(sim_testbench PRIVATE -Wall -Wno-sign-compare)
-target_link_libraries(sim_testbench PRIVATE vmodel verilated_tb_top z)
-
-add_executable(sim_cppsplit sim/sim_cppsplit.cpp)
-target_compile_options(sim_cppsplit PRIVATE -Wall -Wno-sign-compare)
-target_link_libraries(sim_cppsplit PRIVATE vmodel verilated_plus1 verilated_foreach verilated_repeat z)
 
 add_executable(test_vint ${VINT_TEST_SRCS})
 target_compile_options(test_vint PRIVATE -Wall)

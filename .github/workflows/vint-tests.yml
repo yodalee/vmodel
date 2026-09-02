@@ -23,16 +23,16 @@ jobs:
         run: cmake -S . -B build -G Ninja
 
       - name: Build CI targets
-        run: cmake --build build --target sim_cpptop sim_cppsplit sim_testbench test_vint test_shim
+        run: cmake --build build --target sim_validready_cpptop sim_validready_cppsplit sim_validready_testbench test_vint test_shim
 
-      - name: Run sim_cpptop
-        run: ./build/sim_cpptop
+      - name: Run sim_validready_cpptop
+        run: ./build/sim/validready/sim_validready_cpptop
 
-      - name: Run sim_cppsplit
-        run: ./build/sim_cppsplit
+      - name: Run sim_validready_cppsplit
+        run: ./build/sim/validready/sim_validready_cppsplit
 
-      - name: Run sim_testbench
-        run: ./build/sim_testbench
+      - name: Run sim_validready_testbench
+        run: ./build/sim/validready/sim_validready_testbench
 
       - name: Run vint tests
         run: ctest --test-dir build --output-on-failure -R VintTests
